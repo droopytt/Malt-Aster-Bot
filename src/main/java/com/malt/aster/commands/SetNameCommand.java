@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Sets the name of the bot in the server it is called in
  */
-public class SetNameCommand extends Command {
+public class SetNameCommand extends Command implements AdminCommand {
 
     public SetNameCommand() {
         super("setnick");

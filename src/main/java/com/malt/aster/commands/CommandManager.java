@@ -1,5 +1,6 @@
 package com.malt.aster.commands;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.util.*;
@@ -20,6 +21,10 @@ public class CommandManager {
 
         // Adds any space separated strings to the parameter list
         commandOptional.ifPresent(command -> {
+            // Check if the command is an administrator command
+            if(command instanceof AdminCommand && !event.getMember().hasPermission(Permission.ADMINISTRATOR))
+                return;
+
             String[] tokens = event.getMessage().getContentRaw().substring(1).toLowerCase().split(" ", 2);
             List<String> paramList = new ArrayList<>();
             if (hasParams(tokens)) {
