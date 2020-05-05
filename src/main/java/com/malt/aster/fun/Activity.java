@@ -10,6 +10,8 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
  */
 public interface Activity {
 
+    void startUp(GuildMessageReceivedEvent evt);
+
     void handleMessage(GuildMessageReceivedEvent evt);
 
     void handleReaction(GuildMessageReactionAddEvent evt);
