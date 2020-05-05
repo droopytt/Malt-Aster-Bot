@@ -1,6 +1,7 @@
 package com.malt.aster.core;
 
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
@@ -24,5 +25,10 @@ public class EventHandler extends ListenerAdapter {
 
     private boolean containsCommand(GuildMessageReceivedEvent event) {
         return event.getMessage().getContentRaw().startsWith(Bot.getInstance().getPrefix());
+    }
+
+    @Override
+    public void onGuildMessageReactionAdd(@Nonnull GuildMessageReactionAddEvent event) {
+        Bot.getInstance().getActivityManager().handleReaction(event);
     }
 }

@@ -34,10 +34,10 @@ public abstract class Command {
     /**
      * Executes the command given the context (event)
      *
-     * @param event  The event context to execute according to
+     * @param evt The event context to execute according to
      * @param params Potential parameters for this command execution
      */
-    public abstract void execute(GuildMessageReceivedEvent event, List<String> params);
+    public abstract void execute(GuildMessageReceivedEvent evt, List<String> params);
 
     public String getName() {
         return name;

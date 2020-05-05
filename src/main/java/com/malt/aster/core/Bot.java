@@ -1,11 +1,7 @@
 package com.malt.aster.core;
 
-import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
-import com.malt.aster.commands.Command;
-import com.malt.aster.commands.CommandManager;
-import com.malt.aster.commands.LatencyCommand;
-import com.malt.aster.commands.SetNameCommand;
-import com.malt.aster.commands.UnoCommand;
+import com.malt.aster.commands.*;
+import com.malt.aster.fun.GlobalActivityManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -21,13 +17,17 @@ public class Bot {
 
     private JDA botUser;
     private CommandManager commandManager;
+    private GlobalActivityManager activityManager;
         
     private static String prefix;
 
     private Bot(String token) throws LoginException {
     	botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
         botUser.addEventListener();
+
         commandManager = new CommandManager();
+        activityManager = new GlobalActivityManager();
+
         prefix = "!";
         installCommands();
         
@@ -76,5 +76,9 @@ public class Bot {
     public Bot registerCommand(Command command) {
         commandManager.register(command);
         return this;
+    }
+
+    public GlobalActivityManager getActivityManager() {
+        return activityManager;
     }
 }
