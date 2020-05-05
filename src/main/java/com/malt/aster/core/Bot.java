@@ -1,9 +1,11 @@
 package com.malt.aster.core;
 
+import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.malt.aster.commands.Command;
 import com.malt.aster.commands.CommandManager;
 import com.malt.aster.commands.LatencyCommand;
 import com.malt.aster.commands.SetNameCommand;
+import com.malt.aster.commands.UnoCommand;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -19,15 +21,18 @@ public class Bot {
 
     private JDA botUser;
     private CommandManager commandManager;
-
+        
     private static String prefix;
 
     private Bot(String token) throws LoginException {
-        botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
+    	
+    	EventWaiter waiter = new EventWaiter();
+    	botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
+        botUser.addEventListener(waiter);
         commandManager = new CommandManager();
         prefix = "!";
-
-        installCommands();
+        installCommands(waiter);
+        
     }
 
     /**
@@ -38,9 +43,10 @@ public class Bot {
      *
      * Can be used as a chain of calls, for API ease of use.
      */
-    private void installCommands() {
+    private void installCommands(EventWaiter waiter) {
         commandManager.register(new LatencyCommand())
-                      .register(new SetNameCommand());
+                      .register(new SetNameCommand())
+                      .register(new UnoCommand(waiter));
     }
 
     public static void init(String token) throws LoginException {
