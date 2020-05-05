@@ -1,4 +1,4 @@
-package com.malt.aster.fun;
+package com.malt.aster.activities;
 
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;

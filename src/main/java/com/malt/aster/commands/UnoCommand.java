@@ -1,8 +1,8 @@
 package com.malt.aster.commands;
 
+import com.malt.aster.activities.Activity;
+import com.malt.aster.activities.uno.Uno;
 import com.malt.aster.core.Bot;
-import com.malt.aster.fun.Activity;
-import com.malt.aster.fun.uno.Uno;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.util.List;

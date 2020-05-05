@@ -1,4 +1,4 @@
-package com.malt.aster.fun;
+package com.malt.aster.activities;
 
 import com.malt.aster.core.Bot;
 import net.dv8tion.jda.api.entities.Guild;

@@ -1,4 +1,4 @@
-package com.malt.aster.fun;
+package com.malt.aster.activities;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.PrivateChannel;

@@ -1,13 +1,15 @@
-package com.malt.aster.fun.uno;
+package com.malt.aster.activities.uno;
 
-import com.malt.aster.fun.Activity;
-import com.malt.aster.fun.ActivityType;
-import net.dv8tion.jda.api.entities.Member;
+import com.malt.aster.activities.Activity;
+import com.malt.aster.activities.ActivityType;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
-import net.dv8tion.jda.api.requests.restaction.pagination.ReactionPaginationAction;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Uno implements Activity {
 
@@ -17,10 +19,13 @@ public class Uno implements Activity {
 
     private Message startUno;
 
+    private Set<User> participants;
+
     private boolean started;
 
     public Uno(GuildMessageReceivedEvent event) {
         this.commander = event.getAuthor();
+        participants = new HashSet<>();
     }
 
     @Override
@@ -49,10 +54,23 @@ public class Uno implements Activity {
         String emote = evt.getReaction().getReactionEmote().getName();
 
         if(evt.getUser().equals(commander) && emote.equalsIgnoreCase(CROSS_EMOTE)) {
-            evt.getChannel().sendMessage("jsjsjasjasjjsak").queue();
 
-            startUno.retrieveReactionUsers(CHECK_EMOTE)
-                    .forEach(x -> evt.getChannel().sendMessage(x.getName()).queue());
+            // Add commander and anyone who reacted with the checkmark to the list of participants
+            participants.add(commander);
+
+            startUno.retrieveReactionUsers(CHECK_EMOTE).stream()
+                    .filter(user -> !user.isBot())
+                    .filter(user -> !user.equals(commander))
+                    .forEach(user -> participants.add(user));
+
+            // Display the users who are to participate
+            StringBuilder stringBuilder = new StringBuilder();
+            Guild guild = evt.getGuild();
+
+            stringBuilder.append("The current participants are: \n");
+            participants.forEach(user -> stringBuilder.append(guild.getMember(user).getEffectiveName()).append("\n"));
+
+            evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue();
         }
     }
 

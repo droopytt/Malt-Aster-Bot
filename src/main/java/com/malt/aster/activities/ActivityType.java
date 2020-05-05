@@ -1,4 +1,4 @@
-package com.malt.aster.fun;
+package com.malt.aster.activities;
 
 public enum ActivityType {
     UNO
