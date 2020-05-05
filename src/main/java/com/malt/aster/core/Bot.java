@@ -25,13 +25,11 @@ public class Bot {
     private static String prefix;
 
     private Bot(String token) throws LoginException {
-    	
-    	EventWaiter waiter = new EventWaiter();
     	botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
-        botUser.addEventListener(waiter);
+        botUser.addEventListener();
         commandManager = new CommandManager();
         prefix = "!";
-        installCommands(waiter);
+        installCommands();
         
     }
 
@@ -43,10 +41,10 @@ public class Bot {
      *
      * Can be used as a chain of calls, for API ease of use.
      */
-    private void installCommands(EventWaiter waiter) {
+    private void installCommands() {
         commandManager.register(new LatencyCommand())
                       .register(new SetNameCommand())
-                      .register(new UnoCommand(waiter));
+                      .register(new UnoCommand());
     }
 
     public static void init(String token) throws LoginException {
