@@ -20,7 +20,12 @@ public class SetNameCommand extends Command implements AdminCommand {
         if(params.size() == 0)
             event.getChannel().sendMessage("You need to provide a name to change to").queue();
         else {
-            String newName = params.get(0);
+        	String newName = "";
+        	for(int word = 0; word < params.size(); word++) {
+        		newName += " ";
+        		newName += params.get(word);
+        	}
+
             String botId = Bot.getInstance().getBotUser().getSelfUser().getId();
 
             event.getGuild().getMemberById(botId).modifyNickname(newName).queue();
