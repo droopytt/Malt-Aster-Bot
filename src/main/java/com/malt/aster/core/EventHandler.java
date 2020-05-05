@@ -21,6 +21,7 @@ public class EventHandler extends ListenerAdapter {
         if(containsCommand(event))
             Bot.getInstance().handleCommandEvent(event);
 
+        Bot.getInstance().getActivityManager().handleMessage(event);
     }
 
     private boolean containsCommand(GuildMessageReceivedEvent event) {
