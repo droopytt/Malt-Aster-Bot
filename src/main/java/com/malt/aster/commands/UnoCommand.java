@@ -1,17 +1,11 @@
 package com.malt.aster.commands;
 
-import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.malt.aster.core.Bot;
 import com.malt.aster.fun.Activity;
 import com.malt.aster.fun.uno.Uno;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.api.requests.restaction.pagination.ReactionPaginationAction;
 
 import java.util.List;
-import java.util.Objects;
 
 public class UnoCommand extends Command implements AdminCommand {
     public UnoCommand() {
@@ -24,6 +18,9 @@ public class UnoCommand extends Command implements AdminCommand {
             evt.getChannel().sendMessage("Need to set gambling value... WIP").queue();
         else {
         	Activity unoActivity = new Uno(evt);
+        	// TODO make this return false if the activity could not be added and don't startup if that was the case
+
+            // Register the activity with the guild activity manager
             Bot.getInstance().getActivityManager().getActivityManagerForGuild(evt.getGuild()).addActivity(unoActivity);
         	unoActivity.startUp(evt);
         }
