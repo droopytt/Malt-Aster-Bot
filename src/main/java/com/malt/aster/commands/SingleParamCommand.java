@@ -17,8 +17,8 @@ public abstract class SingleParamCommand extends Command {
             execute(evt, (String) null);
         else {
             StringBuilder stringBuilder = new StringBuilder();
-            params.forEach(stringBuilder::append);
-            execute(evt, stringBuilder.toString());
+            params.forEach(str -> stringBuilder.append(str).append(" "));
+            execute(evt, stringBuilder.toString().trim());
         }
 
     }
