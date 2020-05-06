@@ -43,7 +43,7 @@ public class Bot {
      */
     private void installCommands() {
         commandManager.register(new LatencyCommand())
-                      .register(new SetNameCommand())
+                      .register(new SetNickCommand())
                       .register(new UnoCommand());
     }
 

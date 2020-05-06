@@ -9,8 +9,10 @@ import java.util.*;
  * To make a new command there are a few things to do:
  *
  * 1) Make a class that extends this Class
- * 2) Implement the execute method of the class (it's abstract in here) See LatencyCommand and SetName command for example
+ * 2) Implement ONE of the execute methods of the class (it's abstract in here) See LatencyCommand and SetName command for example
  * 3) Add the command to the Bot under the installCommands method
+ *
+ * Do NOT implement both execute methods unless you want both implementations to happen.
  *
  * @see Bot
  */

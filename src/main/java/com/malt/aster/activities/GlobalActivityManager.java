@@ -44,6 +44,7 @@ public class GlobalActivityManager {
 
         return manager;
     }
+    
     public void handleReaction(GuildMessageReactionAddEvent event) {
         getActivityManagerForGuild(event.getGuild()).handleReaction(event);
     }
