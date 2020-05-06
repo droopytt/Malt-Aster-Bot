@@ -25,7 +25,7 @@ public class CommandManager {
             if(command instanceof AdminCommand && !event.getMember().hasPermission(Permission.ADMINISTRATOR))
                 return;
 
-            String[] tokens = event.getMessage().getContentRaw().substring(1).toLowerCase().split(" ", 2);
+            String[] tokens = event.getMessage().getContentRaw().substring(1).split(" ", 2);
             List<String> paramList = new ArrayList<>();
             if (hasParams(tokens)) {
                 final String params = tokens[1].trim();

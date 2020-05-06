@@ -12,7 +12,7 @@ public abstract class SingleParamCommand extends Command {
     }
 
     @Override
-    public void execute(GuildMessageReceivedEvent evt, List<String> params) {
+    public final void execute(GuildMessageReceivedEvent evt, List<String> params) {
         if(params.isEmpty())
             execute(evt, (String) null);
         else {

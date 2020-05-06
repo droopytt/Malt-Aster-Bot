@@ -2,6 +2,7 @@ package com.malt.aster.core;
 
 import com.malt.aster.activities.GlobalActivityManager;
 import com.malt.aster.commands.*;
+import com.malt.aster.commands.utility.CheckRolesCommand;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -44,6 +45,7 @@ public class Bot {
     private void installCommands() {
         commandManager.register(new LatencyCommand())
                       .register(new SetNickCommand())
+                      .register(new CheckRolesCommand())
                       .register(new UnoCommand());
     }
 
