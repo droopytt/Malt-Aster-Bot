@@ -18,7 +18,7 @@ public abstract class UnoCard implements Card {
 
     @Override
     public String getImageUrl() {
-        // TODO implement
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 }

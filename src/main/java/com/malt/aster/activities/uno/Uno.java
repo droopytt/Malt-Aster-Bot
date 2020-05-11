@@ -5,6 +5,7 @@ import com.malt.aster.activities.ActivityPhase;
 import com.malt.aster.activities.ActivityType;
 import com.malt.aster.activities.uno.cards.*;
 import com.malt.aster.core.Bot;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
@@ -16,7 +17,7 @@ public class Uno implements Activity {
 
     private final User commander;
 
-    GuildMessageReceivedEvent originalEvent;
+    private final GuildMessageReceivedEvent originalEvent;
 
     private final List<User> participants;
 
@@ -129,5 +130,13 @@ public class Uno implements Activity {
         List<UnoCard> cards = new ArrayList<>();
         obtainCards(cards);
         return cards;
+    }
+
+    public GuildMessageReceivedEvent getOriginalEvent() {
+        return originalEvent;
+    }
+
+    public Guild getGuild() {
+        return originalEvent.getGuild();
     }
 }

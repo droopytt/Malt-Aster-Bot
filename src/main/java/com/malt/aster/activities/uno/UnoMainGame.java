@@ -50,25 +50,49 @@ public class UnoMainGame extends UnoPhase {
 
         System.out.println("UnoMainGame@onStart: " + participantCards);
 
-        notifyAllUsers();
+        notifyAllUserCards();
+        turnMessage();
+    }
+
+    /**
+     * Prints the message to all participants as to who is currently having their turn right now
+     */
+    private void turnMessage() {
+        participants.forEach(participant -> participant.openPrivateChannel()
+                .queue(channel -> {
+                    String currentUserNickname = Objects.requireNonNull(uno.getGuild().getMember(getCurrentPlayer())).getEffectiveName();
+                    StringBuilder stringBuilder = new StringBuilder("It is currently **");
+
+                    // Message changes depending on who the message is being sent to: the participants or the player who has their turn right now.
+                    if(participant.equals(getCurrentPlayer()))
+                        stringBuilder.append("your");
+                    else
+                        stringBuilder.append(currentUserNickname).append("'s");
+                    stringBuilder.append("** turn");
+
+                    if(participant.equals(getCurrentPlayer()))
+                        stringBuilder.append("\n").append("Please choose a card");
+
+                    channel.sendMessage(stringBuilder.toString().trim()).queue();
+                }));
     }
 
     /**
      * Notifies all users of their current cards
      */
-    private void notifyAllUsers() {
-        participants.forEach(user -> user.openPrivateChannel().queue(callbackChannel -> notifyCards(user, callbackChannel)));
+    private void notifyAllUserCards() {
+        participants.forEach(participant -> participant.openPrivateChannel().queue(callbackChannel -> notifyCards(participant, callbackChannel)));
     }
 
     /**
-     * Print the user cards to the user in direct messages
-     * @param user The user for which the cards are to be printed
+     * Print the participant cards to the participant in direct messages
+     * @param participant The participant for which the cards are to be printed
      * @param channel The message channel (private) to print the cards to
      */
-    private void notifyCards(User user, PrivateChannel channel) {
+    private void notifyCards(User participant, PrivateChannel channel) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        Collection<UnoCard> cards = participantCards.get(user);
+        Collection<UnoCard> cards = participantCards.get(participant);
         stringBuilder.append("You have ").append(cards.size()).append(" cards: \n");
 
         cards.forEach(card -> stringBuilder.append(card).append("\n"));

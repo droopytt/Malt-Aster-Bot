@@ -32,7 +32,7 @@ public class UnoStartPhase extends UnoPhase {
         //Send the initial message allowing users to join and the commander to start the game
         //using reactions
 
-        unoMessage = uno.originalEvent.getChannel().sendMessage("UNO started! React to this message"
+        unoMessage = uno.getOriginalEvent().getChannel().sendMessage("UNO started! React to this message"
                 + " with a CHECK to join, the game will begin when " +
                 uno.getCommander().getAsMention() + " reacts with an 'X'").complete();
 
