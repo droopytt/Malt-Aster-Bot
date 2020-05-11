@@ -26,6 +26,7 @@ public class ValuedUnoCard extends UnoCard {
 
     @Override
     public String toString() {
-        return suit + " " + value;
+        String suitString = suit.toString();
+        return suitString.charAt(0) + suitString.substring(1).toLowerCase() + " " + value;
     }
 }

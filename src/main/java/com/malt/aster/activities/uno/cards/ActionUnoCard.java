@@ -15,6 +15,13 @@ public class ActionUnoCard extends UnoCard {
 
     @Override
     public String toString() {
-        return action.toString();
+        String[] tokens = action.toString().split("_");
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (String token : tokens)
+            stringBuilder.append(token.charAt(0)).append(token.substring(1).toLowerCase()).append(" ");
+
+        return stringBuilder.toString().trim();
     }
 }

@@ -1,27 +1,31 @@
 package com.malt.aster.activities.uno;
 
+import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.*;
 
 /**
  * Decide the main logic of the game
- *
+ * <p>
  * You have access to the participants, the message that initiated this activity, and of course, the
  * root uno activity this phase is a part of.
  */
 public class UnoMainGame extends UnoPhase {
 
-    private final Map<User, Collection<UnoCard>> participantCards;
+    private final Map<User, List<UnoCard>> participantCards;
+    private final Stack<UnoCard> cards;
     private int currentPlayerIndex;
 
     public UnoMainGame(Uno uno) {
         super(uno);
         participantCards = new HashMap<>();
+        cards = new Stack<>();
     }
 
     /**
@@ -70,8 +74,10 @@ public class UnoMainGame extends UnoPhase {
                         stringBuilder.append(currentUserNickname).append("'s");
                     stringBuilder.append("** turn");
 
-                    if(participant.equals(getCurrentPlayer()))
-                        stringBuilder.append("\n").append("Please choose a card");
+                    if (participant.equals(getCurrentPlayer()))
+                        stringBuilder.append("\n").append("Please choose a card option as numbered ").append(participant.getAsMention());
+                    else
+                        stringBuilder.append(". Please wait for them to complete their turn.");
 
                     channel.sendMessage(stringBuilder.toString().trim()).queue();
                 }));
@@ -92,16 +98,20 @@ public class UnoMainGame extends UnoPhase {
     private void notifyCards(User participant, PrivateChannel channel) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        Collection<UnoCard> cards = participantCards.get(participant);
+        List<UnoCard> cards = participantCards.get(participant);
         stringBuilder.append("You have ").append(cards.size()).append(" cards: \n");
 
-        cards.forEach(card -> stringBuilder.append(card).append("\n"));
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            stringBuilder.append("`").append(i + 1).append(".` ").append(card).append("\n");
+        }
+
         channel.sendMessage(stringBuilder.toString()).queue();
     }
 
     @Override
     public void handleMessage(GuildMessageReceivedEvent evt) {
-        // TODO Decide turn logic and card values
+
     }
 
     @Override
@@ -109,8 +119,14 @@ public class UnoMainGame extends UnoPhase {
 
     }
 
+    @Override
+    public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
+        // TODO Decide turn logic and card values
+    }
+
     /**
      * Gets the player whose turn it currently is
+     *
      * @return User The user who is currently taking their turn
      */
     private User getCurrentPlayer() {

@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -80,5 +81,10 @@ public class UnoStartPhase extends UnoPhase {
                 uno.cleanUp();
             }
         }
+    }
+
+    @Override
+    public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
+
     }
 }

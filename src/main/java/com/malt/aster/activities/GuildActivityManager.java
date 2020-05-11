@@ -5,12 +5,13 @@ import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Manages the activities for a particular guild (server)
+ * Manages the activities for a particular {@link Guild} (server)
  */
 public class GuildActivityManager {
 
@@ -27,11 +28,12 @@ public class GuildActivityManager {
 
     /**
      * Adds an activity to this manager.
-     *
+     * <p>
      * If the user who has created an activity already has an activity in progress, then they will be notified
      * that the activity could not be started via direct message.
      *
-     * @param activity The activity to register
+     * @param activity The {@link Activity} to register
+     * @return true if the activity was added successfully, false otherwise
      */
     public boolean addActivity(Activity activity) {
         if(activities.containsKey(activity.getCommander())) {
@@ -52,18 +54,25 @@ public class GuildActivityManager {
 
     public void handleReaction(GuildMessageReactionAddEvent event) {
         Activity activity = activities.get(event.getUser());
-        if(activity != null)
+        if (activity != null)
             activity.handleReaction(event);
     }
 
     public void handleMessage(GuildMessageReceivedEvent event) {
         Activity activity = activities.get(event.getAuthor());
-        if(activity != null)
+        if (activity != null)
             activity.handleMessage(event);
+    }
+
+    public void handlePrivateMessage(PrivateMessageReceivedEvent event) {
+        Activity activity = activities.get(event.getAuthor());
+        if (activity != null)
+            activity.handlePrivateMessage(event);
     }
 
     /**
      * Used to notify the activity commander that they already have an activity in progress
+     *
      * @param activity The activity that failed to start
      */
     private void notifyActivityStartupFailed(Activity activity) {

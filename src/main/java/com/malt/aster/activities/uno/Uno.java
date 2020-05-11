@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,6 +58,11 @@ public class Uno implements Activity {
     @Override
     public void handleReaction(GuildMessageReactionAddEvent evt) {
         currentActivityPhase.handleReaction(evt);
+    }
+
+    @Override
+    public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
+        currentActivityPhase.handlePrivateMessage(evt);
     }
 
     @Override
