@@ -3,13 +3,11 @@ package com.malt.aster.activities.uno;
 import com.malt.aster.activities.Activity;
 import com.malt.aster.activities.ActivityPhase;
 import com.malt.aster.activities.ActivityType;
-import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
@@ -19,7 +17,9 @@ public class Uno implements Activity {
 
     private final User commander;
 
-    Message startMessage;
+    Message unoMessage;
+
+    GuildMessageReceivedEvent originalEvent;
 
     private final Set<User> participants;
 
@@ -33,26 +33,21 @@ public class Uno implements Activity {
         this.commander = event.getAuthor();
         participants = new HashSet<>();
         phases = new LinkedBlockingQueue<>();
+        originalEvent = event;
     }
 
     @Override
-    public void startUp(GuildMessageReceivedEvent evt) {
+    public void onStart() {
         if(!started) {
-            //Send the initial message allowing users to join and the commander to start the game
-            //using reactions
-            startMessage = evt.getChannel().sendMessage("UNO started! React to this message"
-                    + " with a CHECK to join, the game will begin when " +
-                    commander.getAsMention() + " reacts with an 'X'").complete();
-
-            startMessage.addReaction(Constants.CHECK_EMOTE).queue();
-            startMessage.addReaction(Constants.CROSS_EMOTE).queue();
-            started = true;
+            unoMessage = originalEvent.getMessage();
 
             // Add all the phases for this activity
             addPhase(new UnoStartPhase(this));
             addPhase(new UnoMainGame(this));
 
             update();
+
+            started = true;
         }
     }
 
@@ -83,12 +78,14 @@ public class Uno implements Activity {
     public void update() {
         if(phases.isEmpty())
             cleanUp();
-        else
+        else {
             currentActivityPhase = phases.poll();
+            currentActivityPhase.onStart();
+        }
     }
 
     Set<User> getParticipants() {
-        return Collections.unmodifiableSet(participants);
+        return participants;
     }
 
     @Override

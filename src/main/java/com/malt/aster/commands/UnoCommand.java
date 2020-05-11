@@ -22,7 +22,7 @@ public class UnoCommand extends Command implements AdminCommand {
 
             // Register the activity with the guild activity manager
             Bot.getInstance().getActivityManager().getActivityManagerForGuild(evt.getGuild()).addActivity(unoActivity);
-        	unoActivity.startUp(evt);
+        	unoActivity.onStart();
         }
     }
 

@@ -11,6 +11,11 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 public interface ActivityPhase {
 
     /**
+     * Decide what happens when the activity starts
+     */
+    void onStart();
+
+    /**
      * Decide what happens when a message arrives
      * @param evt The relevant {@link GuildMessageReceivedEvent}
      */

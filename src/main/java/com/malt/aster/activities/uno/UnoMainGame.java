@@ -16,6 +16,11 @@ public class UnoMainGame extends UnoPhase {
     }
 
     @Override
+    public void onStart() {
+
+    }
+
+    @Override
     public void handleMessage(GuildMessageReceivedEvent evt) {
 
     }
