@@ -46,7 +46,7 @@ public abstract class Command {
     }
 
     /**
-     * Returns a description for this command
+     * Returns a description for this command. Can be used in commands that describe the commands.
      *
      * @return A string corresponding to a description of this command
      */

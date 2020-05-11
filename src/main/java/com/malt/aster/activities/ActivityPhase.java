@@ -10,11 +10,16 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
  */
 public interface ActivityPhase {
 
+    /**
+     * Decide what happens when a message arrives
+     * @param evt The relevant {@link GuildMessageReceivedEvent}
+     */
     void handleMessage(GuildMessageReceivedEvent evt);
 
+    /**
+     * Decide what happens when a reaction is added
+     * @param evt The relevant {@link GuildMessageReactionAddEvent}
+     */
     void handleReaction(GuildMessageReactionAddEvent evt);
-
-    // Returns condition(s) that are required for the completion of this activity phase
-    boolean canProgress();
 
 }

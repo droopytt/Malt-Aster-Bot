@@ -1,7 +1,10 @@
 package com.malt.aster.core;
 
 import com.malt.aster.activities.GlobalActivityManager;
-import com.malt.aster.commands.*;
+import com.malt.aster.commands.CommandManager;
+import com.malt.aster.commands.LatencyCommand;
+import com.malt.aster.commands.SetNickCommand;
+import com.malt.aster.commands.UnoCommand;
 import com.malt.aster.commands.utility.CheckRolesCommand;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -43,10 +46,11 @@ public class Bot {
      * Can be used as a chain of calls, for API ease of use.
      */
     private void installCommands() {
-        commandManager.register(new LatencyCommand())
-                      .register(new SetNickCommand())
-                      .register(new CheckRolesCommand())
-                      .register(new UnoCommand());
+        commandManager
+                .register(new LatencyCommand())
+                .register(new SetNickCommand())
+                .register(new CheckRolesCommand())
+                .register(new UnoCommand());
     }
 
     public static void init(String token) throws LoginException {
@@ -73,11 +77,6 @@ public class Bot {
 
     public JDA getBotUser() {
         return botUser;
-    }
-
-    public Bot registerCommand(Command command) {
-        commandManager.register(command);
-        return this;
     }
 
     public GlobalActivityManager getActivityManager() {
