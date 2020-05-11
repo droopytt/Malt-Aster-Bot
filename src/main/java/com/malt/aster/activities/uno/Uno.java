@@ -26,7 +26,7 @@ public class Uno implements Activity {
 
     GuildMessageReceivedEvent originalEvent;
 
-    private final Set<User> participants;
+    private final List<User> participants;
 
     private boolean started;
 
@@ -38,7 +38,7 @@ public class Uno implements Activity {
 
     public Uno(GuildMessageReceivedEvent event) {
         this.commander = event.getAuthor();
-        participants = new HashSet<>();
+        participants = new ArrayList<>();
         phases = new LinkedBlockingQueue<>();
         originalEvent = event;
     }
@@ -93,9 +93,9 @@ public class Uno implements Activity {
 
     /**
      * Returns the list of participants for the game
-     * @return A set of {@link User}s that are participating in the game
+     * @return A list of {@link User}s that are participating in the game
      */
-    Set<User> getParticipants() {
+    List<User> getParticipants() {
         return participants;
     }
 
@@ -109,7 +109,7 @@ public class Uno implements Activity {
      * Populates a deck of {@link UnoCard}s. Used to load any collection of cards with cards.
      * @param cards The collection of cards to load
      */
-    static void obtainCards(Collection<UnoCard> cards) {
+    static void obtainCards(Collection<? super UnoCard> cards) {
         for(Color color : colors) {
             cards.add(new ValuedUnoCard(0, color));
 

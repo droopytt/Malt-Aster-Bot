@@ -18,11 +18,10 @@ public class UnoCommand extends Command implements AdminCommand {
             evt.getChannel().sendMessage("Need to set gambling value... WIP").queue();
         else {
         	Activity unoActivity = new Uno(evt);
-        	// TODO make this return false if the activity could not be added and don't startup if that was the case
 
-            // Register the activity with the guild activity manager
-            Bot.getInstance().getActivityManager().getActivityManagerForGuild(evt.getGuild()).addActivity(unoActivity);
-        	unoActivity.onStart();
+            // Register the activity with the guild activity manager. If it could be added that means we start the activity.
+            if(Bot.getInstance().getActivityManager().getActivityManagerForGuild(evt.getGuild()).addActivity(unoActivity))
+        	    unoActivity.onStart();
         }
     }
 

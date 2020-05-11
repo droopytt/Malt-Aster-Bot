@@ -1,6 +1,5 @@
 package com.malt.aster.activities.uno;
 
-import com.malt.aster.activities.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -16,14 +15,12 @@ import java.util.*;
  */
 public class UnoMainGame extends UnoPhase {
 
-    private final Map<User, Collection<Card>> participantCards;
-    private List<User> participants;
+    private final Map<User, Collection<UnoCard>> participantCards;
     private int currentPlayerIndex;
 
     public UnoMainGame(Uno uno) {
         super(uno);
         participantCards = new HashMap<>();
-        participants = new ArrayList<>(participantCards.keySet());
     }
 
     /**
@@ -41,7 +38,7 @@ public class UnoMainGame extends UnoPhase {
 
         // Add the cards to each participant
         participants.forEach(participant -> {
-            List<Card> playerCards = new ArrayList<>();
+            List<UnoCard> playerCards = new ArrayList<>();
             participantCards.put(participant, playerCards);
             for (int i = 0; i < cardsPerPerson && !coloredCards.isEmpty(); i++)
                 playerCards.add(coloredCards.pop());

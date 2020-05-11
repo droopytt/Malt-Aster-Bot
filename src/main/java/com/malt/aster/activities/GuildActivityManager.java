@@ -33,9 +33,14 @@ public class GuildActivityManager {
      *
      * @param activity The activity to register
      */
-    public void addActivity(Activity activity) {
-        // TODO Decide if multiple activities by same user should be handled (see bottom)
-        activities.put(activity.getCommander(), activity);
+    public boolean addActivity(Activity activity) {
+        if(activities.containsValue(activity)) {
+            notifyActivityStartupFailed(activity);
+            return false;
+        } else {
+            activities.put(activity.getCommander(), activity);
+            return true;
+        }
     }
 
     public void handleReaction(GuildMessageReactionAddEvent event) {
