@@ -1,4 +1,4 @@
-package com.malt.aster.activities;
+package com.malt.aster.activities.cards;
 
 public interface ValuedCard extends Card {
 

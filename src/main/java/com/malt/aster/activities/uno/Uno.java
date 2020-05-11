@@ -3,26 +3,18 @@ package com.malt.aster.activities.uno;
 import com.malt.aster.activities.Activity;
 import com.malt.aster.activities.ActivityPhase;
 import com.malt.aster.activities.ActivityType;
-import com.malt.aster.activities.uno.cards.ActionUnoCard;
-import com.malt.aster.activities.uno.cards.CardAction;
-import com.malt.aster.activities.uno.cards.UnoCard;
-import com.malt.aster.activities.uno.cards.ValuedUnoCard;
-import net.dv8tion.jda.api.entities.Message;
+import com.malt.aster.activities.uno.cards.*;
+import com.malt.aster.core.Bot;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 
-import java.awt.*;
-import java.util.List;
-import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Uno implements Activity {
 
     private final User commander;
-
-    Message unoMessage;
 
     GuildMessageReceivedEvent originalEvent;
 
@@ -34,7 +26,7 @@ public class Uno implements Activity {
 
     private final Queue<ActivityPhase> phases;
 
-    private static final List<Color> colors = Arrays.asList(Color.RED, Color.GREEN, Color.YELLOW, Color.GREEN);
+    private static final List<UnoSuit> suits = Arrays.asList(UnoSuit.RED, UnoSuit.GREEN, UnoSuit.YELLOW, UnoSuit.BLUE);
 
     public Uno(GuildMessageReceivedEvent event) {
         this.commander = event.getAuthor();
@@ -46,8 +38,6 @@ public class Uno implements Activity {
     @Override
     public void onStart() {
         if(!started) {
-            unoMessage = originalEvent.getMessage();
-
             // Add all the phases for this activity
             addPhase(new UnoStartPhase(this));
             addPhase(new UnoMainGame(this));
@@ -102,7 +92,7 @@ public class Uno implements Activity {
     @Override
     public void cleanUp() {
         System.out.println("Uno@cleanUp: Cleaning up...");
-        // TODO implement once game logic is complete
+        Bot.getInstance().getActivityManager().getActivityManagerForGuild(originalEvent.getGuild()).removeActivity(this);
     }
 
     /**
@@ -110,12 +100,12 @@ public class Uno implements Activity {
      * @param cards The collection of cards to load
      */
     static void obtainCards(Collection<? super UnoCard> cards) {
-        for(Color color : colors) {
-            cards.add(new ValuedUnoCard(0, color));
+        for(UnoSuit suit : suits) {
+            cards.add(new ValuedUnoCard(0, suit));
 
             for (int i = 1; i < 10; i++) {
-                cards.add(new ValuedUnoCard(i, color));
-                cards.add(new ValuedUnoCard(i, color));
+                cards.add(new ValuedUnoCard(i, suit));
+                cards.add(new ValuedUnoCard(i, suit));
             }
 
             for (int i = 0; i < 2; i++) {

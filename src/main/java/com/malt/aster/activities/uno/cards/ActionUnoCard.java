@@ -15,8 +15,6 @@ public class ActionUnoCard extends UnoCard {
 
     @Override
     public String toString() {
-        return "ActionUnoCard{" +
-                "action=" + action +
-                '}';
+        return action.toString();
     }
 }

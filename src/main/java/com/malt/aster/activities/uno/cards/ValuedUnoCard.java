@@ -1,19 +1,18 @@
 package com.malt.aster.activities.uno.cards;
 
-import com.malt.aster.activities.ColoredCard;
-
-import java.awt.*;
-
-public class ValuedUnoCard extends UnoCard implements ColoredCard {
+/**
+ * An uno card with some numerical value attached to it
+ */
+public class ValuedUnoCard extends UnoCard {
 
     private final int value;
 
-    private final Color color;
+    private final UnoSuit suit;
 
 
-    public ValuedUnoCard(int value, Color color) {
+    public ValuedUnoCard(int value, UnoSuit suit) {
         super();
-        this.color = color;
+        this.suit = suit;
         this.value = value;
     }
 
@@ -21,16 +20,12 @@ public class ValuedUnoCard extends UnoCard implements ColoredCard {
         return value;
     }
 
-    @Override
-    public Color getColor() {
-        return color;
+    public UnoSuit getSuit() {
+        return suit;
     }
 
     @Override
     public String toString() {
-        return "ValuedUnoCard{" +
-                "value=" + value +
-                ", color=" + color +
-                '}';
+        return suit + " " + value;
     }
 }

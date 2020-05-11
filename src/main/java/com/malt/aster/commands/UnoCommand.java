@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.util.List;
 
-public class UnoCommand extends Command implements AdminCommand {
+public class UnoCommand extends Command {
     public UnoCommand() {
         super("uno");
     }

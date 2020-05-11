@@ -1,7 +1,7 @@
 package com.malt.aster.activities.uno.cards;
 
-import com.malt.aster.activities.Card;
-import com.malt.aster.activities.ValuedCard;
+import com.malt.aster.activities.cards.Card;
+import com.malt.aster.activities.cards.ValuedCard;
 
 public abstract class UnoCard implements Card {
 

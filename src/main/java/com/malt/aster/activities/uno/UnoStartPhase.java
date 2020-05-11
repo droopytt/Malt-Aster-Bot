@@ -8,14 +8,17 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 
 import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-import static com.malt.aster.utils.Constants.CHECK_EMOTE;
-import static com.malt.aster.utils.Constants.CROSS_EMOTE;
+import static com.malt.aster.utils.Constants.*;
 
 /**
  * Deals with the part of uno that handles the recruitment process at the start of the game
  */
 public class UnoStartPhase extends UnoPhase {
+
+    Message unoMessage;
 
     public UnoStartPhase(Uno uno) {
         super(uno);
@@ -29,12 +32,12 @@ public class UnoStartPhase extends UnoPhase {
         //Send the initial message allowing users to join and the commander to start the game
         //using reactions
 
-        Message startMessage = uno.originalEvent.getChannel().sendMessage("UNO started! React to this message"
+        unoMessage = uno.originalEvent.getChannel().sendMessage("UNO started! React to this message"
                 + " with a CHECK to join, the game will begin when " +
                 uno.getCommander().getAsMention() + " reacts with an 'X'").complete();
 
-        startMessage.addReaction(Constants.CHECK_EMOTE).queue();
-        startMessage.addReaction(Constants.CROSS_EMOTE).queue();
+        unoMessage.addReaction(Constants.CHECK_EMOTE).queue();
+        unoMessage.addReaction(Constants.CROSS_EMOTE).queue();
     }
 
     @Override
@@ -47,19 +50,35 @@ public class UnoStartPhase extends UnoPhase {
             // Add commander and anyone who reacted with the checkmark to the list of participants
             participants.add(commander);
 
-            startUno.retrieveReactionUsers(CHECK_EMOTE).stream()
-                    .filter(user -> !user.isBot())
-                    .filter(user -> !user.equals(commander))
-                    .forEach(participants::add);
+            // Need stream supplier to reuse stream since streams are closed after you run a terminal operation like count below.
+            Supplier<Stream<User>> userStreamSupplier = () -> unoMessage.retrieveReactionUsers(CHECK_EMOTE).stream().filter(user -> !user.isBot());
 
-            // Display the users who are to participate
-            StringBuilder stringBuilder = new StringBuilder();
-            Guild guild = evt.getGuild();
+            Stream<User> userStream = userStreamSupplier.get();
 
-            stringBuilder.append("The current participants are: \n");
-            participants.forEach(user -> stringBuilder.append(Objects.requireNonNull(guild.getMember(user)).getEffectiveName()).append("\n"));
+            if(userStream.count() >= MINIMUM_UNO_PLAYERS) {
+                userStreamSupplier.get()
+                        .filter(user -> !user.equals(commander))
+                        .forEach(participants::add);
 
-            evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(callback -> uno.update());
+                // Display the users who are to participate
+                StringBuilder stringBuilder = new StringBuilder();
+                Guild guild = evt.getGuild();
+
+                stringBuilder.append("The current participants are: \n");
+                participants.forEach(user -> stringBuilder.append(Objects.requireNonNull(guild.getMember(user)).getEffectiveName()).append("\n"));
+
+                // Update the messages: Delete the original message, and now update uno.
+                evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(callback -> {
+                    uno.update();
+                    unoMessage.delete().queue();
+                });
+            } else {
+                // Disband the session if the session does not have enough players
+                unoMessage.editMessage(unoMessage.getContentRaw()
+                        + "\nYou must have at least " + MINIMUM_UNO_PLAYERS + " players to start - Your session has been disbanded").queue();
+
+                uno.cleanUp();
+            }
         }
     }
 }

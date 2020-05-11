@@ -34,13 +34,20 @@ public class GuildActivityManager {
      * @param activity The activity to register
      */
     public boolean addActivity(Activity activity) {
-        if(activities.containsValue(activity)) {
+        if(activities.containsKey(activity.getCommander())) {
             notifyActivityStartupFailed(activity);
             return false;
         } else {
             activities.put(activity.getCommander(), activity);
             return true;
         }
+    }
+
+    public void removeActivity(Activity activity) {
+        if(activities.containsKey(activity.getCommander()))
+            activities.remove(activity.getCommander());
+        else
+            throw new IllegalStateException("The commander currently does not have an activity to remove.");
     }
 
     public void handleReaction(GuildMessageReactionAddEvent event) {

@@ -1,6 +1,7 @@
 package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.uno.cards.UnoCard;
+import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
@@ -44,7 +45,34 @@ public class UnoMainGame extends UnoPhase {
                 playerCards.add(coloredCards.pop());
         });
 
+        // Random person starts first
+        Collections.shuffle(participants);
+
         System.out.println("UnoMainGame@onStart: " + participantCards);
+
+        notifyAllUsers();
+    }
+
+    /**
+     * Notifies all users of their current cards
+     */
+    private void notifyAllUsers() {
+        participants.forEach(user -> user.openPrivateChannel().queue(callbackChannel -> notifyCards(user, callbackChannel)));
+    }
+
+    /**
+     * Print the user cards to the user in direct messages
+     * @param user The user for which the cards are to be printed
+     * @param channel The message channel (private) to print the cards to
+     */
+    private void notifyCards(User user, PrivateChannel channel) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        Collection<UnoCard> cards = participantCards.get(user);
+        stringBuilder.append("You have ").append(cards.size()).append(" cards: \n");
+
+        cards.forEach(card -> stringBuilder.append(card).append("\n"));
+        channel.sendMessage(stringBuilder.toString()).queue();
     }
 
     @Override
