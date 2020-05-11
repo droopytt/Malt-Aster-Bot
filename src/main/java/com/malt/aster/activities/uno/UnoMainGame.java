@@ -1,6 +1,7 @@
 package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.Card;
+import com.malt.aster.activities.uno.cards.UnoCard;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
@@ -16,10 +17,13 @@ import java.util.*;
 public class UnoMainGame extends UnoPhase {
 
     private final Map<User, Collection<Card>> participantCards;
+    private List<User> participants;
+    private int currentPlayerIndex;
 
     public UnoMainGame(Uno uno) {
         super(uno);
         participantCards = new HashMap<>();
+        participants = new ArrayList<>(participantCards.keySet());
     }
 
     /**
@@ -28,17 +32,17 @@ public class UnoMainGame extends UnoPhase {
     @Override
     public void onStart() {
         Stack<UnoCard> coloredCards = new Stack<>();
-        Collections.shuffle(coloredCards);
         Uno.obtainCards(coloredCards);
+        Collections.shuffle(coloredCards);
 
         System.out.println("UnoMainGame@onStart: Card size: " + coloredCards.size());
 
         int cardsPerPerson = coloredCards.size()/participants.size();
 
         // Add the cards to each participant
-        participants.forEach(x -> {
+        participants.forEach(participant -> {
             List<Card> playerCards = new ArrayList<>();
-            participantCards.put(x, playerCards);
+            participantCards.put(participant, playerCards);
             for (int i = 0; i < cardsPerPerson && !coloredCards.isEmpty(); i++)
                 playerCards.add(coloredCards.pop());
         });
@@ -54,5 +58,19 @@ public class UnoMainGame extends UnoPhase {
     @Override
     public void handleReaction(GuildMessageReactionAddEvent evt) {
 
+    }
+
+    /**
+     * Gets the player whose turn it currently is
+     */
+    private User getCurrentPlayer() {
+        return participants.get(currentPlayerIndex);
+    }
+
+    /**
+     * Starts the next turn
+     */
+    private void nextTurn() {
+        currentPlayerIndex++;
     }
 }

@@ -1,4 +1,4 @@
-package com.malt.aster.activities.uno;
+package com.malt.aster.activities.uno.cards;
 
 import com.malt.aster.activities.Card;
 import com.malt.aster.activities.ValuedCard;

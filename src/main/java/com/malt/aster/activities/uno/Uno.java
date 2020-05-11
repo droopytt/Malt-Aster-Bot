@@ -3,6 +3,10 @@ package com.malt.aster.activities.uno;
 import com.malt.aster.activities.Activity;
 import com.malt.aster.activities.ActivityPhase;
 import com.malt.aster.activities.ActivityType;
+import com.malt.aster.activities.uno.cards.ActionUnoCard;
+import com.malt.aster.activities.uno.cards.CardAction;
+import com.malt.aster.activities.uno.cards.UnoCard;
+import com.malt.aster.activities.uno.cards.ValuedUnoCard;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -134,7 +138,7 @@ public class Uno implements Activity {
     /**
      * @return A list of cards from scratch. Specifically returns an ArrayList.
      */
-    public static List<UnoCard> obtainCards() {
+    static List<UnoCard> obtainCards() {
         List<UnoCard> cards = new ArrayList<>();
         obtainCards(cards);
         return cards;
