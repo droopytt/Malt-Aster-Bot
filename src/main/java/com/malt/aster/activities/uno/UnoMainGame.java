@@ -59,6 +59,7 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Gets the player whose turn it currently is
+     * @return User The user who is currently taking their turn
      */
     private User getCurrentPlayer() {
         return participants.get(currentPlayerIndex);

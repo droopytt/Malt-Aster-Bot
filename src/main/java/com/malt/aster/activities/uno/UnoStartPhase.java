@@ -59,7 +59,7 @@ public class UnoStartPhase extends UnoPhase {
             stringBuilder.append("The current participants are: \n");
             participants.forEach(user -> stringBuilder.append(Objects.requireNonNull(guild.getMember(user)).getEffectiveName()).append("\n"));
 
-            evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(x -> uno.update());
+            evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(callback -> uno.update());
         }
     }
 }
