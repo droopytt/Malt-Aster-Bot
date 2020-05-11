@@ -8,9 +8,10 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 
-import java.util.HashSet;
+import java.awt.*;
+import java.util.List;
 import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Uno implements Activity {
@@ -28,6 +29,8 @@ public class Uno implements Activity {
     private ActivityPhase currentActivityPhase;
 
     private final Queue<ActivityPhase> phases;
+
+    private static final List<Color> colors = Arrays.asList(Color.RED, Color.GREEN, Color.YELLOW, Color.GREEN);
 
     public Uno(GuildMessageReceivedEvent event) {
         this.commander = event.getAuthor();
@@ -84,6 +87,10 @@ public class Uno implements Activity {
         }
     }
 
+    /**
+     * Returns the list of participants for the game
+     * @return A set of {@link User}s that are participating in the game
+     */
     Set<User> getParticipants() {
         return participants;
     }
@@ -91,6 +98,45 @@ public class Uno implements Activity {
     @Override
     public void cleanUp() {
         System.out.println("Uno@cleanUp: Cleaning up...");
-        // TODO implement
+        // TODO implement once game logic is complete
+    }
+
+    /**
+     * Populates a deck of {@link UnoCard}s. Used to load any collection of cards with cards.
+     * @param cards The collection of cards to load
+     */
+    static void obtainCards(Collection<UnoCard> cards) {
+        for(Color color : colors) {
+            cards.add(new ValuedUnoCard(0, color));
+
+            for (int i = 1; i < 10; i++) {
+                cards.add(new ValuedUnoCard(i, color));
+                cards.add(new ValuedUnoCard(i, color));
+            }
+
+            cards.add(new ActionUnoCard(CardAction.DRAW_TWO));
+            cards.add(new ActionUnoCard(CardAction.DRAW_TWO));
+
+            cards.add(new ActionUnoCard(CardAction.SKIP));
+            cards.add(new ActionUnoCard(CardAction.SKIP));
+
+            cards.add(new ActionUnoCard(CardAction.REVERSE));
+            cards.add(new ActionUnoCard(CardAction.REVERSE));
+        }
+
+        for (int i = 0; i < 4; i++) {
+            cards.add(new ActionUnoCard(CardAction.WILD));
+            cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR));
+        }
+    }
+
+
+    /**
+     * @return A list of cards from scratch. Specifically returns an ArrayList.
+     */
+    public static List<UnoCard> obtainCards() {
+        List<UnoCard> cards = new ArrayList<>();
+        obtainCards(cards);
+        return cards;
     }
 }
