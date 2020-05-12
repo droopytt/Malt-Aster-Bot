@@ -2,6 +2,7 @@ package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
+import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -19,13 +20,20 @@ import java.util.*;
 public class UnoMainGame extends UnoPhase {
 
     private final Map<User, List<UnoCard>> participantCards;
-    private final Stack<UnoCard> cards;
+    private final Stack<UnoCard> discardPile;
+    private final Stack<UnoCard> drawPile;
+
+    private int erroneousMessagesRemaining;
     private int currentPlayerIndex;
+
+    private boolean reversed;
 
     public UnoMainGame(Uno uno) {
         super(uno);
         participantCards = new HashMap<>();
-        cards = new Stack<>();
+        discardPile = new Stack<>();
+        drawPile = new Stack<>();
+        erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
     }
 
     /**
@@ -33,54 +41,31 @@ public class UnoMainGame extends UnoPhase {
      */
     @Override
     public void onStart() {
-        Stack<UnoCard> coloredCards = new Stack<>();
-        Uno.obtainCards(coloredCards);
-        Collections.shuffle(coloredCards);
+        Stack<UnoCard> freshDeck = new Stack<>();
+        Uno.obtainCards(freshDeck);
+        Collections.shuffle(freshDeck);
 
-        System.out.println("UnoMainGame@onStart: Card size: " + coloredCards.size());
-
-        int cardsPerPerson = coloredCards.size()/participants.size();
+        System.out.println("UnoMainGame@onStart: Card size: " + freshDeck.size());
 
         // Add the cards to each participant
         participants.forEach(participant -> {
             List<UnoCard> playerCards = new ArrayList<>();
             participantCards.put(participant, playerCards);
-            for (int i = 0; i < cardsPerPerson && !coloredCards.isEmpty(); i++)
-                playerCards.add(coloredCards.pop());
+            for (int i = 0; i < 7; i++)
+                playerCards.add(freshDeck.pop());
         });
+
+        // Add all remaining cards to the draw pile
+        drawPile.addAll(freshDeck);
 
         // Random person starts first
         Collections.shuffle(participants);
 
         System.out.println("UnoMainGame@onStart: " + participantCards);
+        System.out.println("UnoMainGame@onStart: Fresh deck: " + freshDeck);
 
         notifyAllUserCards();
         turnMessage();
-    }
-
-    /**
-     * Prints the message to all participants as to who is currently having their turn right now
-     */
-    private void turnMessage() {
-        participants.forEach(participant -> participant.openPrivateChannel()
-                .queue(channel -> {
-                    String currentUserNickname = Objects.requireNonNull(uno.getGuild().getMember(getCurrentPlayer())).getEffectiveName();
-                    StringBuilder stringBuilder = new StringBuilder("It is currently **");
-
-                    // Message changes depending on who the message is being sent to: the participants or the player who has their turn right now.
-                    if(participant.equals(getCurrentPlayer()))
-                        stringBuilder.append("your");
-                    else
-                        stringBuilder.append(currentUserNickname).append("'s");
-                    stringBuilder.append("** turn");
-
-                    if (participant.equals(getCurrentPlayer()))
-                        stringBuilder.append("\n").append("Please choose a card option as numbered ").append(participant.getAsMention());
-                    else
-                        stringBuilder.append(". Please wait for them to complete their turn.");
-
-                    channel.sendMessage(stringBuilder.toString().trim()).queue();
-                }));
     }
 
     /**
@@ -92,8 +77,9 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Print the participant cards to the participant in direct messages
+     *
      * @param participant The participant for which the cards are to be printed
-     * @param channel The message channel (private) to print the cards to
+     * @param channel     The message channel (private) to print the cards to
      */
     private void notifyCards(User participant, PrivateChannel channel) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -109,6 +95,42 @@ public class UnoMainGame extends UnoPhase {
         channel.sendMessage(stringBuilder.toString()).queue();
     }
 
+    /**
+     * Prints the message to all participants as to who is currently having their turn right now
+     */
+    private void turnMessage() {
+        participants.forEach(participant -> participant.openPrivateChannel()
+                .queue(channel -> {
+                    String currentUserNickname = Objects.requireNonNull(uno.getGuild().getMember(getCurrentPlayer()))
+                            .getEffectiveName();
+
+                    StringBuilder stringBuilder = new StringBuilder("It is now **");
+
+                    // Message changes depending on who the message is being sent to:
+                    // the participants or the player who has their turn right now.
+                    if (participant.equals(getCurrentPlayer()))
+                        stringBuilder.append("your");
+                    else
+                        stringBuilder.append(currentUserNickname).append("'s");
+                    stringBuilder.append("** turn!");
+
+                    if (participant.equals(getCurrentPlayer()))
+                        stringBuilder.append("\n").append("Please choose a card option as numbered ")
+                                .append(participant.getAsMention());
+                    else
+                        stringBuilder.append(". Please wait for them to complete their turn.");
+
+                    stringBuilder.append("\n\n");
+
+                    if (discardPile.isEmpty())
+                        stringBuilder.append("There was no previous card.");
+                    else
+                        stringBuilder.append("The last card was ").append(discardPile.peek());
+
+                    channel.sendMessage(stringBuilder.toString().trim()).queue();
+                }));
+    }
+
     @Override
     public void handleMessage(GuildMessageReceivedEvent evt) {
 
@@ -121,7 +143,52 @@ public class UnoMainGame extends UnoPhase {
 
     @Override
     public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
-        // TODO Decide turn logic and card values
+        User sender = evt.getAuthor();
+        PrivateChannel channel = evt.getChannel();
+
+        if (sender.equals(getCurrentPlayer())) {
+            try {
+                int cardIndex = Integer.parseInt(evt.getMessage().getContentRaw()) - 1;
+
+                if (validChoice(sender, cardIndex)) {
+                    List<UnoCard> currentPlayerCards = participantCards.get(sender);
+                    UnoCard chosenCard = currentPlayerCards.get(cardIndex);
+
+                    // TODO decide logic what happens between conflicting card suits
+                    discardPile.add(chosenCard);
+                    currentPlayerCards.remove(chosenCard);
+
+                    nextTurn();
+                } else {
+                    handleErroneousOption(channel,
+                            "That's not a valid card position. Pick one marked with the numbers");
+                }
+            } catch (NumberFormatException e) {
+                handleErroneousOption(channel, "Select an option from its number. Try again.");
+            }
+        }
+    }
+
+    private void handleErroneousOption(PrivateChannel channel, String message) {
+        if (erroneousMessagesRemaining == 0) {
+            channel.sendMessage("You couldn't pick a correct option so your turn was skipped.").queue();
+            nextTurn();
+        } else {
+            channel.sendMessage(message).queue();
+            erroneousMessagesRemaining--;
+        }
+    }
+
+    /**
+     * Returns true if the choice (option) chosen from the messages is valid for this user
+     *
+     * @param cardIndex The integer representing the choice for this user. This is the raw value provided by the user.
+     *                  Be aware of off-by-one errors with this.
+     * @return true if the choice is valid, false otherwise (out of bounds for example is one way this can return false)
+     */
+    private boolean validChoice(User user, int cardIndex) {
+        List<UnoCard> cards = participantCards.get(user);
+        return cardIndex < cards.size() && cardIndex > 0;
     }
 
     /**
@@ -134,9 +201,12 @@ public class UnoMainGame extends UnoPhase {
     }
 
     /**
-     * Starts the next turn
+     * Starts the next turn, notifies all users of their cards
      */
     private void nextTurn() {
-        currentPlayerIndex++;
+        currentPlayerIndex = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
+        erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
+        notifyAllUserCards();
+        turnMessage();
     }
 }

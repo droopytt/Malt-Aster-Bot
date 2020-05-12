@@ -1,7 +1,6 @@
 package com.malt.aster.activities.uno;
 
 import com.malt.aster.utils.Constants;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -62,7 +61,6 @@ public class UnoStartPhase extends UnoPhase {
 
                 // Display the users who are to participate
                 StringBuilder stringBuilder = new StringBuilder();
-                Guild guild = evt.getGuild();
 
                 stringBuilder.append("The current participants are: \n");
                 participants.forEach(user -> stringBuilder.append(user.getAsMention()).append("\n"));

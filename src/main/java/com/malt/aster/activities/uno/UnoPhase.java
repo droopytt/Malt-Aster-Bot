@@ -12,6 +12,6 @@ public abstract class UnoPhase implements ActivityPhase {
 
     public UnoPhase(Uno uno) {
         this.uno = uno;
-        this.participants = uno.getParticipants();
+        this.participants = uno.participants;
     }
 }

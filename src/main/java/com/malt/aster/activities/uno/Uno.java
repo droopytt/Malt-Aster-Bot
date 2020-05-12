@@ -3,6 +3,7 @@ package com.malt.aster.activities.uno;
 import com.malt.aster.activities.Activity;
 import com.malt.aster.activities.ActivityPhase;
 import com.malt.aster.activities.ActivityType;
+import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.*;
 import com.malt.aster.core.Bot;
 import net.dv8tion.jda.api.entities.Guild;
@@ -20,7 +21,7 @@ public class Uno implements Activity {
 
     private final GuildMessageReceivedEvent originalEvent;
 
-    private final List<User> participants;
+    final List<User> participants;
 
     private boolean started;
 
@@ -89,25 +90,12 @@ public class Uno implements Activity {
     }
 
     /**
-     * Returns the list of participants for the game
-     * @return A list of {@link User}s that are participating in the game
-     */
-    List<User> getParticipants() {
-        return participants;
-    }
-
-    @Override
-    public void cleanUp() {
-        System.out.println("Uno@cleanUp: Cleaning up...");
-        Bot.getInstance().getActivityManager().getActivityManagerForGuild(originalEvent.getGuild()).removeActivity(this);
-    }
-
-    /**
      * Populates a deck of {@link UnoCard}s. Used to load any collection of cards with cards.
+     *
      * @param cards The collection of cards to load
      */
-    static void obtainCards(Collection<? super UnoCard> cards) {
-        for(UnoSuit suit : suits) {
+    public static void obtainCards(Collection<? super UnoCard> cards) {
+        for (UnoSuit suit : suits) {
             cards.add(new ValuedUnoCard(0, suit));
 
             for (int i = 1; i < 10; i++) {
@@ -128,14 +116,28 @@ public class Uno implements Activity {
         }
     }
 
-
     /**
-     * @return A list of cards from scratch. Specifically returns an ArrayList.
+     * @return A list of cards from scratch.
      */
-    static List<UnoCard> obtainCards() {
-        List<UnoCard> cards = new ArrayList<>();
+    public static List<Card> obtainCards() {
+        List<Card> cards = new ArrayList<>();
         obtainCards(cards);
         return cards;
+    }
+
+    @Override
+    public void cleanUp() {
+        System.out.println("Uno@cleanUp: Cleaning up...");
+        Bot.getInstance().getActivityManager().getActivityManagerForGuild(originalEvent.getGuild()).removeActivity(this);
+    }
+
+    /**
+     * Returns the list of participants for the game
+     *
+     * @return A list of {@link User}s that are participating in the game
+     */
+    public Set<User> getParticipants() {
+        return Collections.unmodifiableSet(new HashSet<>(participants));
     }
 
     public GuildMessageReceivedEvent getOriginalEvent() {

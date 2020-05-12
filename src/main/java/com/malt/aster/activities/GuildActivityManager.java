@@ -64,10 +64,15 @@ public class GuildActivityManager {
             activity.handleMessage(event);
     }
 
+    /**
+     * Notifies all activities that the user is involved in that they have sent a message
+     *
+     * @param event The {@link PrivateMessageReceivedEvent} event associated with the message
+     */
     public void handlePrivateMessage(PrivateMessageReceivedEvent event) {
-        Activity activity = activities.get(event.getAuthor());
-        if (activity != null)
-            activity.handlePrivateMessage(event);
+        activities.values().stream()
+                .filter(activity -> activity.getParticipants().contains(event.getAuthor()))
+                .forEach(activity -> activity.handlePrivateMessage(event));
     }
 
     /**
