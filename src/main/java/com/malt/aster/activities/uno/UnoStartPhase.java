@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -66,7 +65,8 @@ public class UnoStartPhase extends UnoPhase {
                 Guild guild = evt.getGuild();
 
                 stringBuilder.append("The current participants are: \n");
-                participants.forEach(user -> stringBuilder.append(Objects.requireNonNull(guild.getMember(user)).getEffectiveName()).append("\n"));
+                participants.forEach(user -> stringBuilder.append(user.getAsMention()).append("\n"));
+                stringBuilder.append("You have been messaged your cards, and the game will now proceed in private messages.");
 
                 // Update the messages: Delete the original message, and now update uno.
                 evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(callback -> {
