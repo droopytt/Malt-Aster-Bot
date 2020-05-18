@@ -7,4 +7,13 @@ package com.malt.aster.commands;
  * Should be implemented by any Command that should only be used by administrators (by definition, they have the
  * administrator permission in the server the command is called in)
  */
-public interface AdminCommand {}
+public interface AdminCommand {
+  
+    public void banUser();
+    
+    public void kickUser();
+    
+    public void Nuke();
+  
+    public String snipe();
+}
