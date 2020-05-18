@@ -1,0 +1,22 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '4.0.4'
+}
+
+mainClassName = 'com.malt.aster.Main'
+
+version = '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  compile 'com.jagrosh:jda-utilities:3.0.3'
+  compile 'net.dv8tion:JDA:4.1.1_101'
+}
+
+compileJava.options.encoding = 'UTF-8'
