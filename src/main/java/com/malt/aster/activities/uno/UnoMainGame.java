@@ -2,6 +2,8 @@ package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
+import com.malt.aster.activities.uno.cards.UnoSuit;
+import com.malt.aster.activities.uno.cards.ValuedUnoCard;
 import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
@@ -155,8 +157,14 @@ public class UnoMainGame extends UnoPhase {
                     UnoCard chosenCard = currentPlayerCards.get(cardIndex);
 
                     // TODO decide logic what happens between conflicting card suits
+                    if (chosenCard.isValued()) {
+                        ValuedUnoCard valuedUnoCard = (ValuedUnoCard) chosenCard;
+                        UnoSuit suit = valuedUnoCard.getSuit();
+                    }
+
                     discardPile.add(chosenCard);
                     currentPlayerCards.remove(chosenCard);
+
 
                     nextTurn();
                 } else {
