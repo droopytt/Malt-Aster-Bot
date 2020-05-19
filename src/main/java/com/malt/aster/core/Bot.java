@@ -27,7 +27,6 @@ public class Bot {
 
     private Bot(String token) throws LoginException {
     	botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
-        botUser.addEventListener();
 
         commandManager = new CommandManager();
         activityManager = new GlobalActivityManager();

@@ -28,7 +28,7 @@ public abstract class Command {
         this.aliases = new HashSet<>();
     }
 
-    protected Command addAlias(String alias) {
+    public Command addAlias(String alias) {
         aliases.add(alias);
         return this;
     }
