@@ -6,7 +6,9 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import javax.annotation.Nullable;
 
 /**
- * Sets the name of the bot in the server it is called in
+ * Sets the name of the bot in the server it is called in.
+ * <p>
+ * Does not change the global username of the bot.
  */
 public class SetNickCommand extends SingleParamCommand implements AdminCommand {
 
