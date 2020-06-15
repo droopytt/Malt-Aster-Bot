@@ -57,6 +57,8 @@ public class UnoMainGame extends UnoPhase {
                 playerCards.add(freshDeck.pop());
         });
 
+        discardPile.add(freshDeck.pop());
+
         // Add all remaining cards to the draw pile
         drawPile.addAll(freshDeck);
 
@@ -153,13 +155,26 @@ public class UnoMainGame extends UnoPhase {
                 int cardIndex = Integer.parseInt(evt.getMessage().getContentRaw()) - 1;
 
                 if (validChoice(sender, cardIndex)) {
+                    // Get the cards of the current player and then check the card at the top of the pile
                     List<UnoCard> currentPlayerCards = participantCards.get(sender);
                     UnoCard chosenCard = currentPlayerCards.get(cardIndex);
+                    UnoCard topCard = discardPile.peek();
 
                     // TODO decide logic what happens between conflicting card suits
-                    if (chosenCard.isValued()) {
-                        ValuedUnoCard valuedUnoCard = (ValuedUnoCard) chosenCard;
-                        UnoSuit suit = valuedUnoCard.getSuit();
+
+                    if(!topCard.getSuit().equals(chosenCard.getSuit())) {
+                        handleErroneousOption(channel, "Please pick a valid card.");
+                        return;
+                    }
+
+                    if(topCard.isValued() && chosenCard.isValued()) {
+                        ValuedUnoCard topValued = (ValuedUnoCard) topCard;
+                        ValuedUnoCard chosenValued = (ValuedUnoCard) chosenCard;
+
+                        if(topValued.getValue() != chosenValued.getValue()) {
+                            handleErroneousOption(channel, "The card numbers are not the same - please pick a valid card.");
+                            return;
+                        }
                     }
 
                     discardPile.add(chosenCard);
@@ -179,7 +194,8 @@ public class UnoMainGame extends UnoPhase {
 
     private void handleErroneousOption(PrivateChannel channel, String message) {
         if (erroneousMessagesRemaining == 0) {
-            channel.sendMessage("You couldn't pick a correct option so your turn was skipped.").queue();
+            channel.sendMessage("You couldn't pick a correct option so your turn was skipped and you were forced to " +
+                    "draw a card.").queue();
             nextTurn();
         } else {
             channel.sendMessage(message).queue();

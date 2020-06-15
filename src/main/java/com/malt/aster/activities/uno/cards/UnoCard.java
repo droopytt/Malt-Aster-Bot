@@ -5,8 +5,10 @@ import com.malt.aster.activities.cards.ValuedCard;
 
 public abstract class UnoCard implements Card {
 
-    public UnoCard() {
+    protected UnoSuit suit;
 
+    public UnoCard(UnoSuit suit) {
+        this.suit = suit;
     }
 
     /**
@@ -16,9 +18,20 @@ public abstract class UnoCard implements Card {
         return this instanceof ValuedCard;
     }
 
+    public UnoSuit getSuit() {
+        return suit;
+    }
+
     @Override
     public String getImageUrl() {
         // TODO
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        return "UnoCard{" +
+                "suit=" + suit +
+                '}';
     }
 }

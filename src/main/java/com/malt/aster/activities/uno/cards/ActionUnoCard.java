@@ -5,7 +5,7 @@ public class ActionUnoCard extends UnoCard {
     private final CardAction action;
 
     public ActionUnoCard(CardAction action) {
-        super();
+        super(UnoSuit.BLUE); // TODO change
         this.action = action;
     }
 
