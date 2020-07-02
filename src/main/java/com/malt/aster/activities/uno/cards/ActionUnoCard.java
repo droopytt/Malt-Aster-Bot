@@ -5,7 +5,7 @@ public class ActionUnoCard extends UnoCard {
     private final CardAction action;
 
     public ActionUnoCard(CardAction action) {
-        super(UnoSuit.BLUE); // TODO change
+        super(UnoSuit.BLUE); // TODO change - action cards can have colours too. Inheritance hierarchy should be reworked
         this.action = action;
     }
 

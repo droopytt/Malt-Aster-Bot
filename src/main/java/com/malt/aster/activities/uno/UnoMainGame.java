@@ -150,44 +150,49 @@ public class UnoMainGame extends UnoPhase {
         User sender = evt.getAuthor();
         PrivateChannel channel = evt.getChannel();
 
-        if (sender.equals(getCurrentPlayer())) {
-            try {
-                int cardIndex = Integer.parseInt(evt.getMessage().getContentRaw()) - 1;
+        if(evt.getMessage().getContentRaw().startsWith(Constants.ACTIVITY_MESSAGE_PREFIX + "say")) {
+            handleCommunicationMessage(evt);
+        } else {
 
-                if (validChoice(sender, cardIndex)) {
-                    // Get the cards of the current player and then check the card at the top of the pile
-                    List<UnoCard> currentPlayerCards = participantCards.get(sender);
-                    UnoCard chosenCard = currentPlayerCards.get(cardIndex);
-                    UnoCard topCard = discardPile.peek();
+            if (sender.equals(getCurrentPlayer())) {
+                try {
+                    int cardIndex = Integer.parseInt(evt.getMessage().getContentRaw()) - 1;
 
-                    // TODO decide logic what happens between conflicting card suits
+                    if (validChoice(sender, cardIndex)) {
+                        // Get the cards of the current player and then check the card at the top of the pile
+                        List<UnoCard> currentPlayerCards = participantCards.get(sender);
+                        UnoCard chosenCard = currentPlayerCards.get(cardIndex);
+                        UnoCard topCard = discardPile.peek();
 
-                    if(!topCard.getSuit().equals(chosenCard.getSuit())) {
-                        handleErroneousOption(channel, "Please pick a valid card.");
-                        return;
-                    }
+                        // TODO decide logic what happens between conflicting card suits
 
-                    if(topCard.isValued() && chosenCard.isValued()) {
-                        ValuedUnoCard topValued = (ValuedUnoCard) topCard;
-                        ValuedUnoCard chosenValued = (ValuedUnoCard) chosenCard;
-
-                        if(topValued.getValue() != chosenValued.getValue()) {
-                            handleErroneousOption(channel, "The card numbers are not the same - please pick a valid card.");
+                        if (!topCard.getSuit().equals(chosenCard.getSuit())) {
+                            handleErroneousOption(channel, "Please pick a valid card.");
                             return;
                         }
+
+                        if (topCard.isValued() && chosenCard.isValued()) {
+                            ValuedUnoCard topValued = (ValuedUnoCard) topCard;
+                            ValuedUnoCard chosenValued = (ValuedUnoCard) chosenCard;
+
+                            if (topValued.getValue() != chosenValued.getValue()) {
+                                handleErroneousOption(channel, "The card numbers are not the same - please pick a valid card.");
+                                return;
+                            }
+                        }
+
+                        discardPile.add(chosenCard);
+                        currentPlayerCards.remove(chosenCard);
+
+
+                        nextTurn();
+                    } else {
+                        handleErroneousOption(channel,
+                                "That's not a valid card position. Pick one marked with the numbers");
                     }
-
-                    discardPile.add(chosenCard);
-                    currentPlayerCards.remove(chosenCard);
-
-
-                    nextTurn();
-                } else {
-                    handleErroneousOption(channel,
-                            "That's not a valid card position. Pick one marked with the numbers");
+                } catch (NumberFormatException e) {
+                    handleErroneousOption(channel, "Select an option from its number. Try again.");
                 }
-            } catch (NumberFormatException e) {
-                handleErroneousOption(channel, "Select an option from its number. Try again.");
             }
         }
     }
@@ -196,6 +201,9 @@ public class UnoMainGame extends UnoPhase {
         if (erroneousMessagesRemaining == 0) {
             channel.sendMessage("You couldn't pick a correct option so your turn was skipped and you were forced to " +
                     "draw a card.").queue();
+
+            // Add the card from the draw pile
+            participantCards.get(getCurrentPlayer()).add(drawPile.pop());
             nextTurn();
         } else {
             channel.sendMessage(message).queue();
@@ -232,5 +240,25 @@ public class UnoMainGame extends UnoPhase {
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
         notifyAllUserCards();
         turnMessage();
+    }
+
+    /**
+     * Sends a message to all users in the activity
+     * @param evt The private message event to handle
+     */
+    private void handleCommunicationMessage(PrivateMessageReceivedEvent evt) {
+
+        // Refer to them by the name in the server the activity was started in
+        String userName = uno.getGuild().getMember(evt.getAuthor()).getEffectiveName();
+
+        // Takes remainder of message, for example, if message is sent through !say hi,
+        // actualMessage now refers to "hi"
+        String actualMessage = evt.getMessage().getContentRaw().split(" ", 2)[0];
+
+        participants
+                .stream()
+                .filter(user -> !user.equals(evt.getAuthor()))
+                .forEach(user -> user.openPrivateChannel()
+                        .queue(channel -> channel.sendMessage("**" + userName + "** says: " + actualMessage).queue()));
     }
 }

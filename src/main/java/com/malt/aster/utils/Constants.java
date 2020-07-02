@@ -15,6 +15,8 @@ public class Constants {
 
     public static final int UNO_MAX_ERRONEOUS_MESSAGES = 3;
 
+    public static final String ACTIVITY_MESSAGE_PREFIX = "!";
+
     // Make non-instantiable
     private Constants() {
     }
