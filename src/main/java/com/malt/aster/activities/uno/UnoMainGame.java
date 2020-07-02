@@ -2,7 +2,6 @@ package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
-import com.malt.aster.activities.uno.cards.UnoSuit;
 import com.malt.aster.activities.uno.cards.ValuedUnoCard;
 import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.PrivateChannel;
@@ -253,7 +252,7 @@ public class UnoMainGame extends UnoPhase {
 
         // Takes remainder of message, for example, if message is sent through !say hi,
         // actualMessage now refers to "hi"
-        String actualMessage = evt.getMessage().getContentRaw().split(" ", 2)[0];
+        String actualMessage = evt.getMessage().getContentRaw().split(" ", 2)[1];
 
         participants
                 .stream()
