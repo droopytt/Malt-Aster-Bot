@@ -104,15 +104,15 @@ public class Uno implements Activity {
             }
 
             for (int i = 0; i < 2; i++) {
-                cards.add(new ActionUnoCard(CardAction.DRAW_TWO));
-                cards.add(new ActionUnoCard(CardAction.SKIP));
-                cards.add(new ActionUnoCard(CardAction.REVERSE));
+                cards.add(new ActionUnoCard(CardAction.DRAW_TWO, suit));
+                cards.add(new ActionUnoCard(CardAction.SKIP, suit));
+                cards.add(new ActionUnoCard(CardAction.REVERSE, suit));
             }
         }
 
         for (int i = 0; i < 4; i++) {
-            cards.add(new ActionUnoCard(CardAction.WILD));
-            cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR));
+            cards.add(new ActionUnoCard(CardAction.WILD, UnoSuit.WILD));
+            cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR, UnoSuit.WILD));
         }
     }
 

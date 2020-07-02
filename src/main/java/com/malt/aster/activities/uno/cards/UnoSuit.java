@@ -6,7 +6,8 @@ public enum UnoSuit {
     RED(Color.RED),
     GREEN(Color.GREEN),
     BLUE(Color.BLUE),
-    YELLOW(Color.YELLOW);
+    YELLOW(Color.YELLOW),
+    WILD(Color.BLACK);
 
     Color color;
 

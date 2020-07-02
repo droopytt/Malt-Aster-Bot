@@ -2,6 +2,7 @@ package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.cards.Card;
 import com.malt.aster.activities.uno.cards.UnoCard;
+import com.malt.aster.activities.uno.cards.UnoSuit;
 import com.malt.aster.activities.uno.cards.ValuedUnoCard;
 import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.PrivateChannel;
@@ -235,14 +236,31 @@ public class UnoMainGame extends UnoPhase {
      * Starts the next turn, notifies all users of their cards
      */
     private void nextTurn() {
-        currentPlayerIndex = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
+        updatePlayerIndex();
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
         notifyAllUserCards();
-        turnMessage();
+
+        List<UnoCard> nextPlayerCards = participantCards.get(getCurrentPlayer());
+        // If there aren't any cards the player can possibly use, consume a card from the draw pile and if it works
+        // then apply that, otherwise force them to keep the card
+        if (nextPlayerCards
+                .stream().noneMatch(card -> card.getSuit().equals(discardPile.peek().getSuit()) || card.getSuit().equals(UnoSuit.WILD))) {
+            // The card to add
+            UnoCard penaltyCard = drawPile.pop();
+
+            // TODO decide logic for consuming the card - do we give the player the choice to use, or just draw the card?
+            //nextPlayerCards.add(drawPile.pop());
+        } else
+            turnMessage();
+    }
+
+    private void updatePlayerIndex() {
+        currentPlayerIndex = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
     }
 
     /**
      * Sends a message to all users in the activity
+     *
      * @param evt The private message event to handle
      */
     private void handleCommunicationMessage(PrivateMessageReceivedEvent evt) {
