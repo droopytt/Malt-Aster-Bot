@@ -15,8 +15,10 @@ public abstract class UnoCard implements Card {
      * @return Whether this card is a value card
      */
     public boolean isValued() {
-        return this instanceof ValuedCard;
+        return this instanceof ValuedUnoCard;
     }
+
+    public boolean isAction() { return this instanceof ActionUnoCard; }
 
     public UnoSuit getSuit() {
         return suit;

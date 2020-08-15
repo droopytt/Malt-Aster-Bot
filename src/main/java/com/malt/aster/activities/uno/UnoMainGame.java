@@ -1,16 +1,16 @@
 package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.cards.Card;
-import com.malt.aster.activities.uno.cards.UnoCard;
-import com.malt.aster.activities.uno.cards.UnoSuit;
-import com.malt.aster.activities.uno.cards.ValuedUnoCard;
+import com.malt.aster.activities.uno.cards.*;
 import com.malt.aster.utils.Constants;
+import com.malt.aster.utils.Utils;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -25,6 +25,8 @@ public class UnoMainGame extends UnoPhase {
     private final Stack<UnoCard> discardPile;
     private final Stack<UnoCard> drawPile;
 
+    private final Map<User, UnoCard> recentlyPenalised;
+
     private int erroneousMessagesRemaining;
     private int currentPlayerIndex;
 
@@ -36,6 +38,39 @@ public class UnoMainGame extends UnoPhase {
         discardPile = new Stack<>();
         drawPile = new Stack<>();
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
+
+        recentlyPenalised = new HashMap<>();
+    }
+
+    /**
+     * Checks if the two cards are equal in value
+     *
+     * @param first  The first card
+     * @param second The second card
+     * @return true if both cards are of the same value, false otherwise
+     */
+    public static boolean checkIfSameValue(UnoCard first, UnoCard second) {
+        // Can't compare their values if either one of them are not valued uno cards
+        if (!first.isValued() || !second.isValued())
+            return false;
+
+        ValuedUnoCard firstValuedCard = (ValuedUnoCard) first;
+        ValuedUnoCard otherValuedCard = (ValuedUnoCard) second;
+
+        return firstValuedCard.getValue() == otherValuedCard.getValue();
+    }
+
+    private static boolean checkIfWild(UnoCard card) {
+        if(!card.isAction())
+            return false;
+
+        ActionUnoCard actionUnoCard = (ActionUnoCard) card;
+
+        return actionUnoCard.isWild();
+    }
+
+    public static boolean canMatch(UnoCard currentCard, UnoCard discardCard) {
+        return checkIfSameValue(currentCard, discardCard) || currentCard.getSuit() == discardCard.getSuit() || checkIfWild(currentCard);
     }
 
     /**
@@ -92,8 +127,14 @@ public class UnoMainGame extends UnoPhase {
         stringBuilder.append("You have ").append(cards.size()).append(" cards: \n");
 
         for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            stringBuilder.append("`").append(i + 1).append(".` ").append(card).append("\n");
+            UnoCard card = cards.get(i);
+            stringBuilder.append("`").append(i + 1).append(".` ");
+            if(canMatch(card, discardPile.peek()))
+                stringBuilder.append("**").append(card).append("**");
+            else
+                stringBuilder.append(card);
+
+            stringBuilder.append("\n");
         }
 
         channel.sendMessage(stringBuilder.toString()).queue();
@@ -149,52 +190,77 @@ public class UnoMainGame extends UnoPhase {
     public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
         User sender = evt.getAuthor();
         PrivateChannel channel = evt.getChannel();
+        String messageContent = evt.getMessage().getContentRaw();
 
-        if(evt.getMessage().getContentRaw().startsWith(Constants.ACTIVITY_MESSAGE_PREFIX + "say")) {
+        if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX + "say")) {
             handleCommunicationMessage(evt);
-        } else {
+        } else if (recentlyPenalised.get(sender) != null) {
+            // If they have yet to decide if they play their card after being penalised
+            switch(messageContent.toLowerCase()) {
+                case "skip":
+                    nextTurn();
+                    break;
+                case "play":
+                    UnoCard penaltyCard = recentlyPenalised.remove(sender);
+                    discardPile.add(penaltyCard);
+                    participantCards.get(sender).remove(penaltyCard);
+                    break;
+                default:
+                    handleErroneousOption(evt.getChannel(), "Please pick either **play** or **skip**");
+                    return;
+            }
 
-            if (sender.equals(getCurrentPlayer())) {
-                try {
-                    int cardIndex = Integer.parseInt(evt.getMessage().getContentRaw()) - 1;
+            uno.participants.forEach(user -> user.openPrivateChannel()
+                    .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) + " has chosen " + messageContent).queue()));
 
-                    if (validChoice(sender, cardIndex)) {
-                        // Get the cards of the current player and then check the card at the top of the pile
-                        List<UnoCard> currentPlayerCards = participantCards.get(sender);
-                        UnoCard chosenCard = currentPlayerCards.get(cardIndex);
-                        UnoCard topCard = discardPile.peek();
+            nextTurn();
 
-                        // TODO decide logic what happens between conflicting card suits
+        } else if (sender.equals(getCurrentPlayer())) {
+            try {
+                int cardIndex = Integer.parseInt(messageContent) - 1;
 
-                        if (!topCard.getSuit().equals(chosenCard.getSuit())) {
-                            handleErroneousOption(channel, "Please pick a valid card.");
-                            return;
-                        }
+                if (validChoice(sender, cardIndex)) {
+                    // Get the cards of the current player and then check the card at the top of the pile
+                    List<UnoCard> currentPlayerCards = participantCards.get(sender);
+                    UnoCard chosenCard = currentPlayerCards.get(cardIndex);
+                    UnoCard topCard = discardPile.peek();
 
-                        if (topCard.isValued() && chosenCard.isValued()) {
-                            ValuedUnoCard topValued = (ValuedUnoCard) topCard;
-                            ValuedUnoCard chosenValued = (ValuedUnoCard) chosenCard;
-
-                            if (topValued.getValue() != chosenValued.getValue()) {
-                                handleErroneousOption(channel, "The card numbers are not the same - please pick a valid card.");
-                                return;
-                            }
-                        }
-
-                        discardPile.add(chosenCard);
-                        currentPlayerCards.remove(chosenCard);
-
-
-                        nextTurn();
-                    } else {
+                    if (!canMatch(chosenCard, topCard)) {
                         handleErroneousOption(channel,
-                                "That's not a valid card position. Pick one marked with the numbers");
+                                "Please pick a valid matching card");
+                        return;
                     }
-                } catch (NumberFormatException e) {
-                    handleErroneousOption(channel, "Select an option from its number. Try again.");
+
+                    // The following code is executed given that the player has picked a valid option
+                    discardPile.add(chosenCard);
+                    currentPlayerCards.remove(chosenCard);
+
+                    nextTurn();
+
+                    if (currentPlayerCards.size() == 1)
+                        notifyCurrentPlayerHasOneCardLeft(sender);
+                } else {
+                    handleErroneousOption(channel,
+                            "That's not a valid card position. Pick one marked with the numbers");
                 }
+            } catch (NumberFormatException e) {
+                handleErroneousOption(channel, "Select an option from its number. Try again.");
             }
         }
+    }
+
+    /**
+     * Messages all the players that the player has one card left (so as to shout "Uno" in person)
+     *
+     * @param user The player who has one card left
+     */
+    private void notifyCurrentPlayerHasOneCardLeft(User user) {
+        uno.participants.forEach(player -> player.openPrivateChannel()
+                .queue(privateChannel -> {
+                    String playerWithOneCardLeftName = Objects.requireNonNull(uno.getGuild().getMember(user)).getEffectiveName();
+                    privateChannel.sendMessage("**" + playerWithOneCardLeftName +
+                            " has one card left!**").queue();
+                }));
     }
 
     private void handleErroneousOption(PrivateChannel channel, String message) {
@@ -206,7 +272,7 @@ public class UnoMainGame extends UnoPhase {
             participantCards.get(getCurrentPlayer()).add(drawPile.pop());
             nextTurn();
         } else {
-            channel.sendMessage(message).queue();
+            channel.sendMessage(message + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES + " chances remaining)").queue();
             erroneousMessagesRemaining--;
         }
     }
@@ -220,7 +286,7 @@ public class UnoMainGame extends UnoPhase {
      */
     private boolean validChoice(User user, int cardIndex) {
         List<UnoCard> cards = participantCards.get(user);
-        return cardIndex < cards.size() && cardIndex > 0;
+        return cardIndex < cards.size() && cardIndex >= 0;
     }
 
     /**
@@ -240,18 +306,18 @@ public class UnoMainGame extends UnoPhase {
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
         notifyAllUserCards();
 
-        List<UnoCard> nextPlayerCards = participantCards.get(getCurrentPlayer());
+        User currentPlayer = getCurrentPlayer();
+        List<UnoCard> currentPlayerCards = participantCards.get(currentPlayer);
         // If there aren't any cards the player can possibly use, consume a card from the draw pile and if it works
         // then apply that, otherwise force them to keep the card
-        if (nextPlayerCards
-                .stream().noneMatch(card -> card.getSuit().equals(discardPile.peek().getSuit()) || card.getSuit().equals(UnoSuit.WILD))) {
-            // The card to add
-            UnoCard penaltyCard = drawPile.pop();
-
-            // TODO decide logic for consuming the card - do we give the player the choice to use, or just draw the card?
-            //nextPlayerCards.add(drawPile.pop());
-        } else
+        if (currentPlayerCards
+                .stream()
+                .noneMatch(card -> (card.getSuit().equals(discardPile.peek().getSuit()) || card.getSuit().equals(UnoSuit.WILD))
+                        || checkIfSameValue(card, discardPile.peek()))) {
+            penalisePlayer(currentPlayer, currentPlayerCards);
+        } else {
             turnMessage();
+        }
     }
 
     private void updatePlayerIndex() {
@@ -266,7 +332,7 @@ public class UnoMainGame extends UnoPhase {
     private void handleCommunicationMessage(PrivateMessageReceivedEvent evt) {
 
         // Refer to them by the name in the server the activity was started in
-        String userName = uno.getGuild().getMember(evt.getAuthor()).getEffectiveName();
+        String userName = Objects.requireNonNull(uno.getGuild().getMember(evt.getAuthor())).getEffectiveName();
 
         // Takes remainder of message, for example, if message is sent through !say hi,
         // actualMessage now refers to "hi"
@@ -277,5 +343,30 @@ public class UnoMainGame extends UnoPhase {
                 .filter(user -> !user.equals(evt.getAuthor()))
                 .forEach(user -> user.openPrivateChannel()
                         .queue(channel -> channel.sendMessage("**" + userName + "** says: " + actualMessage).queue()));
+    }
+
+    private void penalisePlayer(User player, List<UnoCard> cards) {
+        // The card to add
+        UnoCard penaltyCard = drawPile.pop();
+
+        cards.add(penaltyCard);
+        sendPenaltyMessageToAll(player, penaltyCard);
+    }
+
+    /**
+     * Notify all the players that the player has been penalised because they did not have a card that they could use
+     *
+     * @param penalisedPlayer The player that has been penalised
+     * @param card            The card that was added
+     */
+    private void sendPenaltyMessageToAll(User penalisedPlayer, UnoCard card) {
+        String userEffectiveName = Utils.getEffectiveName(penalisedPlayer, uno.getGuild());
+        uno.participants.forEach(user -> user.openPrivateChannel()
+                .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a **" + card + "**. They can decide " +
+                        "if they wish to play it or skip.").queue()));
+
+        // TODO logic for deciding if we skip the user if they cant play the card anyway
+        penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("Please type *skip* or *play* to reflect your decision.").queue());
+        recentlyPenalised.put(penalisedPlayer, card);
     }
 }
