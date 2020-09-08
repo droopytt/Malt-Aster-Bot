@@ -7,5 +7,6 @@ public class WildCardAction implements UnoActionable {
     @Override
     public void perform(User sender, UnoMainGame unoMainGame) {
         // TODO implement
+        unoMainGame.nextTurn();
     }
 }

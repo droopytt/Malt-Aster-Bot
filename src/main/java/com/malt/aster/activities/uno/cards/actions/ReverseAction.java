@@ -10,5 +10,7 @@ public class ReverseAction implements UnoActionable {
         unoMainGame.reverse();
         unoMainGame.getParticipants().forEach(user -> user.openPrivateChannel()
                 .queue(channel -> channel.sendMessage(Utils.getEffectiveName(user, unoMainGame.getGuild()) + " has reversed the turn order!").queue()));
+
+        unoMainGame.nextTurn();
     }
 }

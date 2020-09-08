@@ -12,5 +12,7 @@ public class SkipAction implements UnoActionable {
         unoMainGame.getParticipants().forEach(user -> user.openPrivateChannel()
                 .queue(channel -> channel.sendMessage(skippedParticipantName + " has had their turn skipped!").queue()));
         unoMainGame.updatePlayerIndex();
+
+        unoMainGame.nextTurn();
     }
 }

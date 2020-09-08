@@ -273,8 +273,8 @@ public class UnoMainGame extends UnoPhase {
 
         if (chosenCard.isAction())
             handleActionCard(sender, chosenCard);
-
-        nextTurn();
+        else
+            nextTurn();
     }
 
     /**
@@ -340,7 +340,7 @@ public class UnoMainGame extends UnoPhase {
     /**
      * Starts the next turn, notifies all users of their cards
      */
-    private void nextTurn() {
+    public void nextTurn() {
         updatePlayerIndex();
         turnNumber++;
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
