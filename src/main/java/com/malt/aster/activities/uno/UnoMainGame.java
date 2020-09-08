@@ -331,9 +331,10 @@ public class UnoMainGame extends UnoPhase {
 
             // If they were supposed to decide the wild card
             if(waitingOnWildChoice) {
-                UnoSuit suit = UnoSuit.getRandomColouredSuit();
+                UnoSuit suit = Uno.getRandomColouredSuit();
                 StringBuilder stringBuilderForAll = new StringBuilder();
                 stringBuilderForAll.append("\n\n").append("The wildcard suit was set to ").append(suit.toString().toLowerCase());
+                stringBuilder.append(stringBuilderForAll);
                 ((ActionUnoCard)discardPile.peek()).setSuit(suit);
                 waitingOnWildChoice = false;
                 participants.stream().filter(participant -> !participant.equals(getCurrentPlayer())).forEach(participant -> participant.openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(stringBuilderForAll).queue()));
@@ -399,7 +400,14 @@ public class UnoMainGame extends UnoPhase {
      * this in accordance to whether the board is reversed or not.
      */
     public void updatePlayerIndex() {
-        currentPlayerIndex = reversed ? Math.abs((currentPlayerIndex - 1) % participants.size()) : (currentPlayerIndex + 1) % participants.size();
+        currentPlayerIndex = getNextPlayerIndex();
+    }
+
+    private int getNextPlayerIndex() {
+        int idx = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
+        if(idx < 0)
+            idx = participants.size() - 1;
+        return idx;
     }
 
     /**
@@ -409,7 +417,7 @@ public class UnoMainGame extends UnoPhase {
      * @return The next player
      */
     public User getNextPlayer() {
-        return reversed ? participants.get(Math.abs((currentPlayerIndex - 1) % participants.size())) : participants.get((currentPlayerIndex + 1) % participants.size());
+        return participants.get(getNextPlayerIndex());
     }
 
     /**
@@ -454,7 +462,12 @@ public class UnoMainGame extends UnoPhase {
     private void sendPenaltyMessageToAll(User penalisedPlayer, UnoCard penaltyCard) {
         String userEffectiveName = Utils.getEffectiveName(penalisedPlayer, uno.getGuild());
 
-        if (!canMatch(discardPile.peek(), penaltyCard)) {
+        if (!canMatch(penaltyCard, discardPile.peek())) {
+            if(penaltyCard.isAction()) {
+                ActionUnoCard actionUnoCard = (ActionUnoCard) penaltyCard;
+                if(actionUnoCard.isWild())
+                    System.out.println("WTF IT SHOULD BE MATCHING??");
+            }
             // Logic for deciding if we skip the user if they cant play the penalty card anyway
             uno.participants.forEach(user -> user.openPrivateChannel()
                     .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match. This card also did not match so their turn was skipped entirely!").queue()));
@@ -503,7 +516,7 @@ public class UnoMainGame extends UnoPhase {
                         .append(": ").append(Utils.getEffectiveName(participant, uno.getGuild())).append(" - ")
                         .append(participantData.get(participant).getScore()).append(" points\n"));
 
-        User userWithHighestScore = participants.stream().max(scoreComparator).orElse(winner);
+        User userWithHighestScore = participants.stream().min(scoreComparator).orElse(winner);
 
         // Called if game concludes entirely (25 multiplied by the participant size)
         if (participantData.get(userWithHighestScore).getScore() >= participants.size() * 25) {

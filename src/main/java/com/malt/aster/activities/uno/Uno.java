@@ -38,6 +38,11 @@ public class Uno implements Activity {
         originalEvent = event;
     }
 
+    // Returns a random suit that isn't a wild suit
+    public static UnoSuit getRandomColouredSuit() {
+        return suits.get(new Random().nextInt(suits.size()));
+    }
+
     @Override
     public void onStart() {
         if(!started) {
