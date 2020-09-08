@@ -422,12 +422,13 @@ public class UnoMainGame extends UnoPhase {
                     .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match. This card also did not match so their turn was skipped entirely!").queue()));
             nextTurn();
         } else {
-            uno.participants.forEach(user -> user.openPrivateChannel()
-                    .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a card from the draw pile" + ". They can decide " +
-                            "if they wish to play it or skip.").queue()));
+            StringBuilder sb = new StringBuilder(userEffectiveName + " has been penalised - they were given a card from the draw pile" + ". They can decide " +
+                    "if they wish to play it or skip.");
+            uno.participants.stream().filter(user -> !user.equals(getCurrentPlayer())).forEach(user -> user.openPrivateChannel()
+                    .queue(channel -> channel.sendMessage(sb.toString()).queue()));
 
-            penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("You were given a **" + penaltyCard + "**. \nPlease type **skip** or **play** to reflect your decision. \n" +
-                    "The most recent card was **" + discardPile.peek() + "**.").queue());
+            sb.append(penalisedPlayer.getAsMention()).append(" You were given a **").append(penaltyCard).append("**. \nPlease type **skip** or **play** to reflect your decision. \n").append("The most recent card was **").append(discardPile.peek()).append("**.");
+            penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage(sb.toString()).queue());
             recentlyPenalised.put(penalisedPlayer, penaltyCard);
         }
     }
