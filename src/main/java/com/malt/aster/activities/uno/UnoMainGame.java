@@ -1,7 +1,9 @@
 package com.malt.aster.activities.uno;
 
-import com.malt.aster.activities.cards.Card;
-import com.malt.aster.activities.uno.cards.*;
+import com.malt.aster.activities.uno.cards.ActionUnoCard;
+import com.malt.aster.activities.uno.cards.UnoCard;
+import com.malt.aster.activities.uno.cards.UnoSuit;
+import com.malt.aster.activities.uno.cards.ValuedUnoCard;
 import com.malt.aster.utils.Constants;
 import com.malt.aster.utils.Utils;
 import net.dv8tion.jda.api.entities.PrivateChannel;
@@ -10,8 +12,8 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
-import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Decide the main logic of the game
@@ -21,7 +23,7 @@ import java.util.*;
  */
 public class UnoMainGame extends UnoPhase {
 
-    private final Map<User, List<UnoCard>> participantCards;
+    private final Map<User, UnoGameData> participantData;
     private final Stack<UnoCard> discardPile;
     private final Stack<UnoCard> drawPile;
 
@@ -29,12 +31,13 @@ public class UnoMainGame extends UnoPhase {
 
     private int erroneousMessagesRemaining;
     private int currentPlayerIndex;
+    private int turnNumber;
 
     private boolean reversed;
 
     public UnoMainGame(Uno uno) {
         super(uno);
-        participantCards = new HashMap<>();
+        participantData = new HashMap<>();
         discardPile = new Stack<>();
         drawPile = new Stack<>();
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
@@ -61,7 +64,7 @@ public class UnoMainGame extends UnoPhase {
     }
 
     private static boolean checkIfWild(UnoCard card) {
-        if(!card.isAction())
+        if (!card.isAction())
             return false;
 
         ActionUnoCard actionUnoCard = (ActionUnoCard) card;
@@ -85,12 +88,18 @@ public class UnoMainGame extends UnoPhase {
         System.out.println("UnoMainGame@onStart: Card size: " + freshDeck.size());
 
         // Add the cards to each participant
-        participants.forEach(participant -> {
+
+        for(User participant : participants) {
             List<UnoCard> playerCards = new ArrayList<>();
-            participantCards.put(participant, playerCards);
+
+            if(participantData.get(participant) == null)
+                participantData.put(participant, new UnoGameData(participant, playerCards));
+            else
+                participantData.get(participant).setCards(playerCards);
+
             for (int i = 0; i < 7; i++)
                 playerCards.add(freshDeck.pop());
-        });
+        }
 
         discardPile.add(freshDeck.pop());
 
@@ -100,11 +109,10 @@ public class UnoMainGame extends UnoPhase {
         // Random person starts first
         Collections.shuffle(participants);
 
-        System.out.println("UnoMainGame@onStart: " + participantCards);
+        System.out.println("UnoMainGame@onStart: " + participantData);
         System.out.println("UnoMainGame@onStart: Fresh deck: " + freshDeck);
 
-        notifyAllUserCards();
-        turnMessage();
+        nextTurn();
     }
 
     /**
@@ -123,13 +131,13 @@ public class UnoMainGame extends UnoPhase {
     private void notifyCards(User participant, PrivateChannel channel) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        List<UnoCard> cards = participantCards.get(participant);
-        stringBuilder.append("You have ").append(cards.size()).append(" cards: \n");
+        List<UnoCard> cards = participantData.get(participant).getCards();
+        stringBuilder.append("__Turn ").append(turnNumber).append("__\nYou have ").append(cards.size()).append(" cards: \n");
 
         for (int i = 0; i < cards.size(); i++) {
             UnoCard card = cards.get(i);
             stringBuilder.append("`").append(i + 1).append(".` ");
-            if(canMatch(card, discardPile.peek()))
+            if (canMatch(card, discardPile.peek()) && participant.equals(getCurrentPlayer()))
                 stringBuilder.append("**").append(card).append("**");
             else
                 stringBuilder.append(card);
@@ -190,20 +198,20 @@ public class UnoMainGame extends UnoPhase {
     public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
         User sender = evt.getAuthor();
         PrivateChannel channel = evt.getChannel();
-        String messageContent = evt.getMessage().getContentRaw();
+        String messageContent = evt.getMessage().getContentRaw().toLowerCase();
 
         if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX)) {
             handleCommunicationMessage(evt);
         } else if (recentlyPenalised.get(sender) != null) {
             // If they have yet to decide if they play their card after being penalised
-            switch(messageContent.toLowerCase()) {
+            switch (messageContent.toLowerCase()) {
                 case "skip":
-                    nextTurn();
+                    recentlyPenalised.remove(sender);
                     break;
                 case "play":
                     UnoCard penaltyCard = recentlyPenalised.remove(sender);
                     discardPile.add(penaltyCard);
-                    participantCards.get(sender).remove(penaltyCard);
+                    participantData.get(sender).removeCard(penaltyCard);
                     break;
                 default:
                     handleErroneousOption(evt.getChannel(), "Please pick either **play** or **skip**");
@@ -221,7 +229,7 @@ public class UnoMainGame extends UnoPhase {
 
                 if (validChoice(sender, cardIndex)) {
                     // Get the cards of the current player and then check the card at the top of the pile
-                    List<UnoCard> currentPlayerCards = participantCards.get(sender);
+                    List<UnoCard> currentPlayerCards = participantData.get(sender).getCards();
                     UnoCard chosenCard = currentPlayerCards.get(cardIndex);
                     UnoCard topCard = discardPile.peek();
 
@@ -233,12 +241,18 @@ public class UnoMainGame extends UnoPhase {
 
                     // The following code is executed given that the player has picked a valid option
                     discardPile.add(chosenCard);
-                    currentPlayerCards.remove(chosenCard);
-
-                    nextTurn();
+                    participantData.get(sender).removeCard(chosenCard);
 
                     if (currentPlayerCards.size() == 1)
                         notifyCurrentPlayerHasOneCardLeft(sender);
+
+                    if(currentPlayerCards.size() == 0) {
+                        handleVictory(getCurrentPlayer());
+                        return;
+                    }
+
+                    nextTurn();
+
                 } else {
                     handleErroneousOption(channel,
                             "That's not a valid card position. Pick one marked with the numbers");
@@ -270,7 +284,7 @@ public class UnoMainGame extends UnoPhase {
                     "draw a card.").queue();
 
             // Add the card from the draw pile
-            participantCards.get(getCurrentPlayer()).add(drawPile.pop());
+            participantData.get(getCurrentPlayer()).addCard(drawPile.pop());
             nextTurn();
         } else {
             channel.sendMessage(message + " (" + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES + " chances remaining)").queue();
@@ -286,7 +300,7 @@ public class UnoMainGame extends UnoPhase {
      * @return true if the choice is valid, false otherwise (out of bounds for example is one way this can return false)
      */
     private boolean validChoice(User user, int cardIndex) {
-        List<UnoCard> cards = participantCards.get(user);
+        List<UnoCard> cards = participantData.get(user).getCards();
         return cardIndex < cards.size() && cardIndex >= 0;
     }
 
@@ -304,18 +318,20 @@ public class UnoMainGame extends UnoPhase {
      */
     private void nextTurn() {
         updatePlayerIndex();
+        turnNumber++;
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
         notifyAllUserCards();
 
         User currentPlayer = getCurrentPlayer();
-        List<UnoCard> currentPlayerCards = participantCards.get(currentPlayer);
+        List<UnoCard> currentPlayerCards = participantData.get(currentPlayer).getCards();
+
         // If there aren't any cards the player can possibly use, consume a card from the draw pile and if it works
         // then apply that, otherwise force them to keep the card
         if (currentPlayerCards
                 .stream()
                 .noneMatch(card -> (card.getSuit().equals(discardPile.peek().getSuit()) || card.getSuit().equals(UnoSuit.WILD))
                         || checkIfSameValue(card, discardPile.peek()))) {
-            penalisePlayer(currentPlayer, currentPlayerCards);
+            penalisePlayer(currentPlayer);
         } else {
             turnMessage();
         }
@@ -332,8 +348,8 @@ public class UnoMainGame extends UnoPhase {
      */
     private void handleCommunicationMessage(PrivateMessageReceivedEvent evt) {
 
-        // If they typed an exclaimation mark but didnt follow it with a communication message, then don't do anything
-        if(evt.getMessage().getContentRaw().split(" ").length <= 1)
+        // If they typed an exclamation mark but didnt follow it with a communication message, then don't do anything
+        if (evt.getMessage().getContentRaw().split(" ").length <= 1)
             return;
 
         // Refer to them by the name in the server the activity was started in
@@ -350,11 +366,11 @@ public class UnoMainGame extends UnoPhase {
                         .queue(channel -> channel.sendMessage("**" + userName + "** says: " + actualMessage).queue()));
     }
 
-    private void penalisePlayer(User player, List<UnoCard> cards) {
+    private void penalisePlayer(User player) {
         // The card to add
         UnoCard penaltyCard = drawPile.pop();
 
-        cards.add(penaltyCard);
+        participantData.get(getCurrentPlayer()).addCard(penaltyCard);
         sendPenaltyMessageToAll(player, penaltyCard);
     }
 
@@ -362,18 +378,68 @@ public class UnoMainGame extends UnoPhase {
      * Notify all the players that the player has been penalised because they did not have a card that they could use
      *
      * @param penalisedPlayer The player that has been penalised
-     * @param card            The card that was added as a result of the penalty
+     * @param penaltyCard     The penaltyCard that was added as a result of the penalty
      */
-    private void sendPenaltyMessageToAll(User penalisedPlayer, UnoCard card) {
+    private void sendPenaltyMessageToAll(User penalisedPlayer, UnoCard penaltyCard) {
         String userEffectiveName = Utils.getEffectiveName(penalisedPlayer, uno.getGuild());
 
-        uno.participants.forEach(user -> user.openPrivateChannel()
-                .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a **" + "card from the draw pile" + "**. They can decide " +
-                        "if they wish to play it or skip.").queue()));
+        if (!canMatch(discardPile.peek(), penaltyCard)) {
+            // Logic for deciding if we skip the user if they cant play the penalty card anyway
+            uno.participants.forEach(user -> user.openPrivateChannel()
+                    .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match.").queue()));
+            nextTurn();
+        }
+        else {
+            uno.participants.forEach(user -> user.openPrivateChannel()
+                    .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a card from the draw pile" + ". They can decide " +
+                            "if they wish to play it or skip.").queue()));
 
-        // TODO logic for deciding if we skip the user if they cant play the card anyway
-        penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("You were given a " + card + ". \nPlease type *skip* or *play* to reflect your decision. \n" +
-                "The most recent card was " + discardPile.peek()).queue());
-        recentlyPenalised.put(penalisedPlayer, card);
+            penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("You were given a **" + penaltyCard + "**. \nPlease type **skip** or **play** to reflect your decision. \n" +
+                    "The most recent card was **" + discardPile.peek() + "**.").queue());
+            recentlyPenalised.put(penalisedPlayer, penaltyCard);
+        }
+    }
+
+    /**
+     * Decide what happens when a round ends (a player reaches 0 cards)
+     * @param winner The user that has won
+     */
+    private void handleVictory(User winner) {
+        int scoreToAdd = 0;
+
+        for(User participant : participants) {
+            if(participant.equals(winner))
+                continue;
+
+            for(UnoCard card : participantData.get(participant).getCards())
+                scoreToAdd += card.getScoreValue();
+        }
+
+        // Update the winner score and reset the game
+        participantData.get(winner).addScore(scoreToAdd);
+
+        // TODO decide logic for what happens when a user hits a maximum score (and the game should finish)
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(Utils.getEffectiveName(winner, uno.getGuild())).append(" has won ").append(scoreToAdd).append(" points. ").append("\nThe current leaderboard is now:\n");
+
+        AtomicInteger leaderboardIndex = new AtomicInteger(1);
+
+        // Build the leaderboard
+        participants.stream()
+                .sorted((o1, o2) -> participantData.get(o2).getScore() - participantData.get(o1).getScore())
+                .forEach(participant -> sb.append("`").append(leaderboardIndex.getAndIncrement()).append("`")
+                        .append(": ").append(Utils.getEffectiveName(participant, uno.getGuild())).append(" - ")
+                        .append(participantData.get(participant).getScore()).append(" points\n"));
+
+        participants.forEach(participant -> participant.openPrivateChannel()
+                .queue(privateChannel -> privateChannel.sendMessage(sb.toString().trim()).queue()));
+
+        // Restart the game again and clear the two piles
+        drawPile.clear();
+        discardPile.clear();
+        turnNumber = 0;
+        onStart();
     }
 }

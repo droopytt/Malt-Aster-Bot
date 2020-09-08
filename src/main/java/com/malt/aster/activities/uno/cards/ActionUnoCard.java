@@ -14,7 +14,12 @@ public class ActionUnoCard extends UnoCard {
     }
 
     public boolean isWild() {
-        return action == CardAction.WILD || action == CardAction.DRAW_FOUR;
+        return action == CardAction.WILD || action == CardAction.WILD_DRAW_FOUR;
+    }
+
+    @Override
+    public int getScoreValue() {
+        return action.getScoreValue();
     }
 
     @Override

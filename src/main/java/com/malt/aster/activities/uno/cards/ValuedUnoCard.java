@@ -17,6 +17,11 @@ public class ValuedUnoCard extends UnoCard {
     }
 
     @Override
+    public int getScoreValue() {
+        return value;
+    }
+
+    @Override
     public String toString() {
         String suitString = suit.toString();
         return suitString.charAt(0) + suitString.substring(1).toLowerCase() + " " + value;

@@ -30,6 +30,8 @@ public abstract class UnoCard implements Card {
         throw new UnsupportedOperationException();
     }
 
+    public abstract int getScoreValue();
+
     @Override
     public String toString() {
         return "UnoCard{" +
