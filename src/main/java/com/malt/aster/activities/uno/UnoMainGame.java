@@ -192,7 +192,7 @@ public class UnoMainGame extends UnoPhase {
         PrivateChannel channel = evt.getChannel();
         String messageContent = evt.getMessage().getContentRaw();
 
-        if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX + "say")) {
+        if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX)) {
             handleCommunicationMessage(evt);
         } else if (recentlyPenalised.get(sender) != null) {
             // If they have yet to decide if they play their card after being penalised
@@ -255,6 +255,7 @@ public class UnoMainGame extends UnoPhase {
      * @param user The player who has one card left
      */
     private void notifyCurrentPlayerHasOneCardLeft(User user) {
+        // TODO If the player will have one card left after the turn, THEY should say it. IF they don't the other players have the opportunity to call them out - if they are called out they will be forced to draw 2
         uno.participants.forEach(player -> player.openPrivateChannel()
                 .queue(privateChannel -> {
                     String playerWithOneCardLeftName = Objects.requireNonNull(uno.getGuild().getMember(user)).getEffectiveName();
@@ -272,7 +273,7 @@ public class UnoMainGame extends UnoPhase {
             participantCards.get(getCurrentPlayer()).add(drawPile.pop());
             nextTurn();
         } else {
-            channel.sendMessage(message + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES + " chances remaining)").queue();
+            channel.sendMessage(message + " (" + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES + " chances remaining)").queue();
             erroneousMessagesRemaining--;
         }
     }
@@ -331,6 +332,10 @@ public class UnoMainGame extends UnoPhase {
      */
     private void handleCommunicationMessage(PrivateMessageReceivedEvent evt) {
 
+        // If they typed an exclaimation mark but didnt follow it with a communication message, then don't do anything
+        if(evt.getMessage().getContentRaw().split(" ").length <= 1)
+            return;
+
         // Refer to them by the name in the server the activity was started in
         String userName = Objects.requireNonNull(uno.getGuild().getMember(evt.getAuthor())).getEffectiveName();
 
@@ -357,16 +362,18 @@ public class UnoMainGame extends UnoPhase {
      * Notify all the players that the player has been penalised because they did not have a card that they could use
      *
      * @param penalisedPlayer The player that has been penalised
-     * @param card            The card that was added
+     * @param card            The card that was added as a result of the penalty
      */
     private void sendPenaltyMessageToAll(User penalisedPlayer, UnoCard card) {
         String userEffectiveName = Utils.getEffectiveName(penalisedPlayer, uno.getGuild());
+
         uno.participants.forEach(user -> user.openPrivateChannel()
-                .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a **" + card + "**. They can decide " +
+                .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a **" + "card from the draw pile" + "**. They can decide " +
                         "if they wish to play it or skip.").queue()));
 
         // TODO logic for deciding if we skip the user if they cant play the card anyway
-        penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("Please type *skip* or *play* to reflect your decision.").queue());
+        penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage("You were given a " + card + ". \nPlease type *skip* or *play* to reflect your decision. \n" +
+                "The most recent card was " + discardPile.peek()).queue());
         recentlyPenalised.put(penalisedPlayer, card);
     }
 }

@@ -5,5 +5,5 @@ public enum CardAction {
     SKIP,
     REVERSE,
     WILD,
-    WILD_DRAW_FOUR
+    DRAW_FOUR
 }

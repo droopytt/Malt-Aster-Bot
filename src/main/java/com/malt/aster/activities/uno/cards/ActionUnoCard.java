@@ -14,7 +14,7 @@ public class ActionUnoCard extends UnoCard {
     }
 
     public boolean isWild() {
-        return action == CardAction.WILD || action == CardAction.WILD_DRAW_FOUR;
+        return action == CardAction.WILD || action == CardAction.DRAW_FOUR;
     }
 
     @Override
@@ -22,10 +22,12 @@ public class ActionUnoCard extends UnoCard {
         String[] tokens = action.toString().split("_");
 
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(suit).append(" ");
 
         for (String token : tokens)
             stringBuilder.append(token.charAt(0)).append(token.substring(1).toLowerCase()).append(" ");
+
+        if(!this.isWild())
+            stringBuilder.append("(").append(suit.toString().charAt(0)).append(suit.toString().substring(1).toLowerCase()).append(")");
 
         return stringBuilder.toString().trim();
     }
