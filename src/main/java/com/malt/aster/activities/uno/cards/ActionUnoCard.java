@@ -17,6 +17,10 @@ public class ActionUnoCard extends UnoCard {
         return action == CardAction.WILD || action == CardAction.WILD_DRAW_FOUR;
     }
 
+    public void setSuit(UnoSuit suit) {
+        this.suit = suit;
+    }
+
     @Override
     public int getScoreValue() {
         return action.getScoreValue();

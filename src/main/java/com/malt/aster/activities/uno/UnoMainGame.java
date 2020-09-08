@@ -279,7 +279,8 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Decide logic for handling action cards here
-     * @param sender The player who has chosen the action card
+     *
+     * @param sender     The player who has chosen the action card
      * @param chosenCard The card that lead to the action (to be converted to an action card to infer the action)
      */
     private void handleActionCard(User sender, UnoCard chosenCard) {
@@ -362,16 +363,17 @@ public class UnoMainGame extends UnoPhase {
     }
 
     public void updatePlayerIndex() {
-        currentPlayerIndex = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
+        currentPlayerIndex = reversed ? Math.abs((currentPlayerIndex - 1) % participants.size()) : (currentPlayerIndex + 1) % participants.size();
     }
 
     /**
      * Returns the player that is to go next after the current one
      * Does not update the current player
+     *
      * @return The next player
      */
     public User getNextPlayer() {
-        return reversed ? participants.get((currentPlayerIndex - 1) % participants.size()) : participants.get((currentPlayerIndex + 1) % participants.size());
+        return reversed ? participants.get(Math.abs((currentPlayerIndex - 1) % participants.size())) : participants.get((currentPlayerIndex + 1) % participants.size());
     }
 
     /**
@@ -427,7 +429,7 @@ public class UnoMainGame extends UnoPhase {
             uno.participants.stream().filter(user -> !user.equals(getCurrentPlayer())).forEach(user -> user.openPrivateChannel()
                     .queue(channel -> channel.sendMessage(sb.toString()).queue()));
 
-            sb.append(penalisedPlayer.getAsMention()).append(" You were given a **").append(penaltyCard).append("**. \nPlease type **skip** or **play** to reflect your decision. \n").append("The most recent card was **").append(discardPile.peek()).append("**.");
+            sb.append("\n\n").append(penalisedPlayer.getAsMention()).append(" You were given a **").append(penaltyCard).append("**. \nPlease type **skip** or **play** to reflect your decision. \n").append("The most recent card was **").append(discardPile.peek()).append("**.");
             penalisedPlayer.openPrivateChannel().queue(channel -> channel.sendMessage(sb.toString()).queue());
             recentlyPenalised.put(penalisedPlayer, penaltyCard);
         }
@@ -467,21 +469,36 @@ public class UnoMainGame extends UnoPhase {
 
         User userWithHighestScore = participants.stream().max(scoreComparator).orElse(winner);
 
+        // Called if game concludes entirely
         if (participantData.get(userWithHighestScore).getScore() >= Constants.UNO_MAX_SCORE) {
             uno.cleanUp();
             // TODO add logic for currency system
             sb.append("\nThat concludes this game of UNO! You have all been rewarded for your efforts. Congratulations to ")
                     .append(userWithHighestScore).append(" on their victory!");
-        } else {
-            // Restart the game again and clear the two piles
-            drawPile.clear();
-            discardPile.clear();
-            turnNumber = 0;
-            onStart();
+            participants.forEach(participant -> participant.openPrivateChannel()
+                    .queue(privateChannel -> privateChannel.sendMessage(sb.toString().trim()).queue()));
+            return;
         }
 
         participants.forEach(participant -> participant.openPrivateChannel()
                 .queue(privateChannel -> privateChannel.sendMessage(sb.toString().trim()).queue()));
+        // Restart the game again and clear the two piles
+        drawPile.clear();
+        discardPile.clear();
+        turnNumber = 0;
+        onStart();
+
+
+    }
+
+    /**
+     * Draws the amount of cards from the draw pile and puts it into the provided player's cards
+     * @param partipant The participant to add cards to
+     * @param amount The amount of cards to draw
+     */
+    public void draw(User partipant, int amount) {
+        for (int i = 0; i < amount; i++)
+            participantData.get(partipant).addCard(drawPile.pop());
     }
 
     /**
@@ -493,6 +510,7 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Returns a view of the participants
+     *
      * @return A view of the participants of this uno game
      */
     public List<User> getParticipants() {
@@ -501,6 +519,7 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Return the guild this uno main game is part of
+     *
      * @return The uno guild this is part of
      */
     public Guild getGuild() {
