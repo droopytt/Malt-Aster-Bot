@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * Decide the main logic of the game
@@ -29,6 +30,8 @@ public class UnoMainGame extends UnoPhase {
 
     private final Map<User, UnoCard> recentlyPenalised;
 
+    private Comparator<User> scoreComparator;
+
     private int erroneousMessagesRemaining;
     private int currentPlayerIndex;
     private int turnNumber;
@@ -43,6 +46,8 @@ public class UnoMainGame extends UnoPhase {
         erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
 
         recentlyPenalised = new HashMap<>();
+
+        scoreComparator = (o1, o2) -> participantData.get(o2).getScore() - participantData.get(o1).getScore();
     }
 
     /**
@@ -89,10 +94,10 @@ public class UnoMainGame extends UnoPhase {
 
         // Add the cards to each participant
 
-        for(User participant : participants) {
+        for (User participant : participants) {
             List<UnoCard> playerCards = new ArrayList<>();
 
-            if(participantData.get(participant) == null)
+            if (participantData.get(participant) == null)
                 participantData.put(participant, new UnoGameData(participant, playerCards));
             else
                 participantData.get(participant).setCards(playerCards);
@@ -246,7 +251,7 @@ public class UnoMainGame extends UnoPhase {
                     if (currentPlayerCards.size() == 1)
                         notifyCurrentPlayerHasOneCardLeft(sender);
 
-                    if(currentPlayerCards.size() == 0) {
+                    if (currentPlayerCards.size() == 0) {
                         handleVictory(getCurrentPlayer());
                         return;
                     }
@@ -388,8 +393,7 @@ public class UnoMainGame extends UnoPhase {
             uno.participants.forEach(user -> user.openPrivateChannel()
                     .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match.").queue()));
             nextTurn();
-        }
-        else {
+        } else {
             uno.participants.forEach(user -> user.openPrivateChannel()
                     .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised - they were given a card from the draw pile" + ". They can decide " +
                             "if they wish to play it or skip.").queue()));
@@ -402,23 +406,22 @@ public class UnoMainGame extends UnoPhase {
 
     /**
      * Decide what happens when a round ends (a player reaches 0 cards)
+     *
      * @param winner The user that has won
      */
     private void handleVictory(User winner) {
         int scoreToAdd = 0;
 
-        for(User participant : participants) {
-            if(participant.equals(winner))
+        for (User participant : participants) {
+            if (participant.equals(winner))
                 continue;
 
-            for(UnoCard card : participantData.get(participant).getCards())
+            for (UnoCard card : participantData.get(participant).getCards())
                 scoreToAdd += card.getScoreValue();
         }
 
         // Update the winner score and reset the game
         participantData.get(winner).addScore(scoreToAdd);
-
-        // TODO decide logic for what happens when a user hits a maximum score (and the game should finish)
 
         StringBuilder sb = new StringBuilder();
 
@@ -428,18 +431,27 @@ public class UnoMainGame extends UnoPhase {
 
         // Build the leaderboard
         participants.stream()
-                .sorted((o1, o2) -> participantData.get(o2).getScore() - participantData.get(o1).getScore())
+                .sorted(scoreComparator)
                 .forEach(participant -> sb.append("`").append(leaderboardIndex.getAndIncrement()).append("`")
                         .append(": ").append(Utils.getEffectiveName(participant, uno.getGuild())).append(" - ")
                         .append(participantData.get(participant).getScore()).append(" points\n"));
 
+        User userWithHighestScore = participants.stream().max(scoreComparator).orElse(winner);
+
+        if (participantData.get(userWithHighestScore).getScore() >= Constants.UNO_MAX_SCORE) {
+            uno.cleanUp();
+            // TODO add logic for currency system
+            sb.append("\nThat concludes this game of UNO! You have all been rewarded for your efforts. Congratulations to ")
+                    .append(userWithHighestScore).append(" on their victory!");
+        } else {
+            // Restart the game again and clear the two piles
+            drawPile.clear();
+            discardPile.clear();
+            turnNumber = 0;
+            onStart();
+        }
+
         participants.forEach(participant -> participant.openPrivateChannel()
                 .queue(privateChannel -> privateChannel.sendMessage(sb.toString().trim()).queue()));
-
-        // Restart the game again and clear the two piles
-        drawPile.clear();
-        discardPile.clear();
-        turnNumber = 0;
-        onStart();
     }
 }
