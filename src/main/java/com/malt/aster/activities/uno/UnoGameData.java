@@ -7,7 +7,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class UnoGameData {
+/**
+ * A helper class to map each {@link User} in a {@link Uno} game to their corresponding {@link UnoCard} list and their score for the game so far
+ */
+class UnoGameData {
 
     private final User user;
 

@@ -1,11 +1,9 @@
 package com.malt.aster.activities.uno;
 
-import com.malt.aster.activities.uno.cards.ActionUnoCard;
-import com.malt.aster.activities.uno.cards.UnoCard;
-import com.malt.aster.activities.uno.cards.UnoSuit;
-import com.malt.aster.activities.uno.cards.ValuedUnoCard;
+import com.malt.aster.activities.uno.cards.*;
 import com.malt.aster.utils.Constants;
 import com.malt.aster.utils.Utils;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -14,7 +12,6 @@ import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 /**
  * Decide the main logic of the game
@@ -211,22 +208,20 @@ public class UnoMainGame extends UnoPhase {
             // If they have yet to decide if they play their card after being penalised
             switch (messageContent.toLowerCase()) {
                 case "skip":
+                    uno.participants.forEach(user -> user.openPrivateChannel()
+                            .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) + " has chosen " + messageContent).queue()));
                     recentlyPenalised.remove(sender);
+                    nextTurn();
                     break;
                 case "play":
+                    uno.participants.forEach(user -> user.openPrivateChannel()
+                            .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) + " has chosen " + messageContent).queue()));
                     UnoCard penaltyCard = recentlyPenalised.remove(sender);
-                    discardPile.add(penaltyCard);
-                    participantData.get(sender).removeCard(penaltyCard);
+                    doTurnRoutine(sender, penaltyCard);
                     break;
                 default:
                     handleErroneousOption(evt.getChannel(), "Please pick either **play** or **skip**");
-                    return;
             }
-
-            uno.participants.forEach(user -> user.openPrivateChannel()
-                    .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) + " has chosen " + messageContent).queue()));
-
-            nextTurn();
 
         } else if (sender.equals(getCurrentPlayer())) {
             try {
@@ -244,19 +239,8 @@ public class UnoMainGame extends UnoPhase {
                         return;
                     }
 
-                    // The following code is executed given that the player has picked a valid option
-                    discardPile.add(chosenCard);
-                    participantData.get(sender).removeCard(chosenCard);
-
-                    if (currentPlayerCards.size() == 1)
-                        notifyCurrentPlayerHasOneCardLeft(sender);
-
-                    if (currentPlayerCards.size() == 0) {
-                        handleVictory(getCurrentPlayer());
-                        return;
-                    }
-
-                    nextTurn();
+                    // If all is well
+                    doTurnRoutine(sender, chosenCard);
 
                 } else {
                     handleErroneousOption(channel,
@@ -266,6 +250,41 @@ public class UnoMainGame extends UnoPhase {
                 handleErroneousOption(channel, "Select an option from its number. Try again.");
             }
         }
+    }
+
+    /**
+     * This method is executed given that the player has picked a valid option
+     *
+     * @param chosenCard The card to select
+     * @param sender     The player that is choosing the card
+     */
+    public void doTurnRoutine(User sender, UnoCard chosenCard) {
+        List<UnoCard> currentPlayerCards = participantData.get(sender).getCards();
+        discardPile.add(chosenCard);
+        participantData.get(sender).removeCard(chosenCard);
+
+        if (currentPlayerCards.size() == 0) {
+            handleVictory(getCurrentPlayer());
+            return;
+        }
+
+        if (currentPlayerCards.size() == 1)
+            notifyCurrentPlayerHasOneCardLeft(sender);
+
+        if (chosenCard.isAction())
+            handleActionCard(sender, chosenCard);
+
+        nextTurn();
+    }
+
+    /**
+     * Decide logic for handling action cards here
+     * @param sender The player who has chosen the action card
+     * @param chosenCard The card that lead to the action (to be converted to an action card to infer the action)
+     */
+    private void handleActionCard(User sender, UnoCard chosenCard) {
+        CardAction cardAction = ((ActionUnoCard) chosenCard).getAction();
+        cardAction.perform(sender, this);
     }
 
     /**
@@ -342,8 +361,17 @@ public class UnoMainGame extends UnoPhase {
         }
     }
 
-    private void updatePlayerIndex() {
+    public void updatePlayerIndex() {
         currentPlayerIndex = reversed ? (currentPlayerIndex - 1) % participants.size() : (currentPlayerIndex + 1) % participants.size();
+    }
+
+    /**
+     * Returns the player that is to go next after the current one
+     * Does not update the current player
+     * @return The next player
+     */
+    public User getNextPlayer() {
+        return reversed ? participants.get((currentPlayerIndex - 1) % participants.size()) : participants.get((currentPlayerIndex + 1) % participants.size());
     }
 
     /**
@@ -391,7 +419,7 @@ public class UnoMainGame extends UnoPhase {
         if (!canMatch(discardPile.peek(), penaltyCard)) {
             // Logic for deciding if we skip the user if they cant play the penalty card anyway
             uno.participants.forEach(user -> user.openPrivateChannel()
-                    .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match.").queue()));
+                    .queue(channel -> channel.sendMessage(userEffectiveName + " has been penalised and forced to draw an extra card as they did not have any to match. This card also did not match so their turn was skipped entirely!").queue()));
             nextTurn();
         } else {
             uno.participants.forEach(user -> user.openPrivateChannel()
@@ -453,5 +481,28 @@ public class UnoMainGame extends UnoPhase {
 
         participants.forEach(participant -> participant.openPrivateChannel()
                 .queue(privateChannel -> privateChannel.sendMessage(sb.toString().trim()).queue()));
+    }
+
+    /**
+     * Inverts the direction of the turns
+     */
+    public void reverse() {
+        reversed = !reversed;
+    }
+
+    /**
+     * Returns a view of the participants
+     * @return A view of the participants of this uno game
+     */
+    public List<User> getParticipants() {
+        return Collections.unmodifiableList(participants);
+    }
+
+    /**
+     * Return the guild this uno main game is part of
+     * @return The uno guild this is part of
+     */
+    public Guild getGuild() {
+        return uno.getGuild();
     }
 }
