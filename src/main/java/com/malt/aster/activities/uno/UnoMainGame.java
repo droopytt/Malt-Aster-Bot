@@ -25,9 +25,12 @@ public class UnoMainGame extends UnoPhase {
     private final Stack<UnoCard> discardPile;
     private final Stack<UnoCard> drawPile;
 
+    // Are we waiting on a user to decide the colour of a wildcard?
+    private boolean waitingOnWildChoice;
+
     private final Map<User, UnoCard> recentlyPenalised;
 
-    private Comparator<User> scoreComparator;
+    private final Comparator<User> scoreComparator;
 
     private int erroneousMessagesRemaining;
     private int currentPlayerIndex;
@@ -204,6 +207,24 @@ public class UnoMainGame extends UnoPhase {
 
         if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX)) {
             handleCommunicationMessage(evt);
+        } else if (waitingOnWildChoice) {
+            UnoSuit desiredSuit = null;
+            try {
+                desiredSuit = UnoSuit.valueOf(messageContent.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                handleErroneousOption(channel, messageContent + " is not a valid suit.");
+            }
+            if(desiredSuit == UnoSuit.WILD)
+                handleErroneousOption(channel, "Please enter a valid suit to set the wildcard to");
+            else {
+                ((ActionUnoCard)discardPile.peek()).setSuit(desiredSuit);
+                UnoSuit finalDesiredSuit = desiredSuit;
+                participants.forEach(user -> user.openPrivateChannel()
+                        .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) +
+                                " has chosen the wild card colour to be " + finalDesiredSuit.toString().toLowerCase()).queue()));
+                waitingOnWildChoice = false;
+                nextTurn();
+            }
         } else if (recentlyPenalised.get(sender) != null) {
             // If they have yet to decide if they play their card after being penalised
             switch (messageContent.toLowerCase()) {
@@ -305,11 +326,22 @@ public class UnoMainGame extends UnoPhase {
 
     private void handleErroneousOption(PrivateChannel channel, String message) {
         if (erroneousMessagesRemaining == 0) {
-            channel.sendMessage("You couldn't pick a correct option so your turn was skipped and you were forced to " +
-                    "draw a card.").queue();
+            StringBuilder stringBuilder = new StringBuilder("You couldn't pick a correct option so your turn was skipped and you were forced to " +
+                    "draw a card.");
+
+            // If they were supposed to decide the wild card
+            if(waitingOnWildChoice) {
+                UnoSuit suit = UnoSuit.getRandomColouredSuit();
+                StringBuilder stringBuilderForAll = new StringBuilder();
+                stringBuilderForAll.append("\n\n").append("The wildcard suit was set to ").append(suit.toString().toLowerCase());
+                ((ActionUnoCard)discardPile.peek()).setSuit(suit);
+                waitingOnWildChoice = false;
+                participants.stream().filter(participant -> !participant.equals(getCurrentPlayer())).forEach(participant -> participant.openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(stringBuilderForAll).queue()));
+            }
 
             // Add the card from the draw pile
             participantData.get(getCurrentPlayer()).addCard(drawPile.pop());
+            channel.sendMessage(stringBuilder.toString()).queue();
             nextTurn();
         } else {
             channel.sendMessage(message + " (" + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES + " chances remaining)").queue();
@@ -362,6 +394,10 @@ public class UnoMainGame extends UnoPhase {
         }
     }
 
+    /**
+     * Increments the current player index, so that the turn updates. Used when skipping turns as well, and does
+     * this in accordance to whether the board is reversed or not.
+     */
     public void updatePlayerIndex() {
         currentPlayerIndex = reversed ? Math.abs((currentPlayerIndex - 1) % participants.size()) : (currentPlayerIndex + 1) % participants.size();
     }
@@ -469,8 +505,8 @@ public class UnoMainGame extends UnoPhase {
 
         User userWithHighestScore = participants.stream().max(scoreComparator).orElse(winner);
 
-        // Called if game concludes entirely
-        if (participantData.get(userWithHighestScore).getScore() >= Constants.UNO_MAX_SCORE) {
+        // Called if game concludes entirely (25 multiplied by the participant size)
+        if (participantData.get(userWithHighestScore).getScore() >= participants.size() * 25) {
             uno.cleanUp();
             // TODO add logic for currency system
             sb.append("\nThat concludes this game of UNO! You have all been rewarded for your efforts. Congratulations to ")
@@ -487,18 +523,21 @@ public class UnoMainGame extends UnoPhase {
         discardPile.clear();
         turnNumber = 0;
         onStart();
+    }
 
-
+    public void setWaitingOnWild() {
+        this.waitingOnWildChoice = true;
     }
 
     /**
      * Draws the amount of cards from the draw pile and puts it into the provided player's cards
-     * @param partipant The participant to add cards to
-     * @param amount The amount of cards to draw
+     *
+     * @param participant The participant to add cards to
+     * @param amount      The amount of cards to draw
      */
-    public void draw(User partipant, int amount) {
+    public void draw(User participant, int amount) {
         for (int i = 0; i < amount; i++)
-            participantData.get(partipant).addCard(drawPile.pop());
+            participantData.get(participant).addCard(drawPile.pop());
     }
 
     /**

@@ -14,7 +14,7 @@ public class ActionUnoCard extends UnoCard {
     }
 
     public boolean isWild() {
-        return action == CardAction.WILD || action == CardAction.WILD_DRAW_FOUR;
+        return suit == UnoSuit.WILD;
     }
 
     public void setSuit(UnoSuit suit) {

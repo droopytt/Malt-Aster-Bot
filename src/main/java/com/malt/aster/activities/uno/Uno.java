@@ -112,7 +112,7 @@ public class Uno implements Activity {
 
         for (int i = 0; i < 4; i++) {
             cards.add(new ActionUnoCard(CardAction.WILD, UnoSuit.WILD));
-            cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR, UnoSuit.WILD));
+            // cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR, UnoSuit.WILD)); TODO add this back
         }
     }
 
