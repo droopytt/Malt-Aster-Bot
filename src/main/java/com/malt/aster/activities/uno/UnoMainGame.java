@@ -88,7 +88,7 @@ public class UnoMainGame extends UnoPhase {
     public void onStart() {
         Stack<UnoCard> freshDeck = new Stack<>();
         Uno.obtainCards(freshDeck);
-        Collections.shuffle(freshDeck);
+        Utils.shuffleCollection(freshDeck);
 
         System.out.println("UnoMainGame@onStart: Card size: " + freshDeck.size());
 
@@ -341,7 +341,7 @@ public class UnoMainGame extends UnoPhase {
             }
 
             // Add the card from the draw pile
-            participantData.get(getCurrentPlayer()).addCard(drawPile.pop());
+            participantData.get(getCurrentPlayer()).addCard(drawCard());
             channel.sendMessage(stringBuilder.toString()).queue();
             nextTurn();
         } else {
@@ -447,7 +447,7 @@ public class UnoMainGame extends UnoPhase {
 
     private void penalisePlayer(User player) {
         // The card to add
-        UnoCard penaltyCard = drawPile.pop();
+        UnoCard penaltyCard = drawCard();
 
         participantData.get(getCurrentPlayer()).addCard(penaltyCard);
         sendPenaltyMessageToAll(player, penaltyCard);
@@ -550,7 +550,7 @@ public class UnoMainGame extends UnoPhase {
      */
     public void draw(User participant, int amount) {
         for (int i = 0; i < amount; i++)
-            participantData.get(participant).addCard(drawPile.pop());
+            participantData.get(participant).addCard(drawCard());
     }
 
     /**
@@ -576,5 +576,20 @@ public class UnoMainGame extends UnoPhase {
      */
     public Guild getGuild() {
         return uno.getGuild();
+    }
+
+    private UnoCard drawCard() {
+        // If we find that the draw pile is empty, then reset it and put everything from the discard pile back in
+        if(drawPile.isEmpty()) {
+            UnoCard topCard = discardPile.pop();
+
+            // Temporary card list for shuffling
+            List<UnoCard> discardPileAsList = new ArrayList<>(discardPile);
+            Utils.shuffleCollection(discardPileAsList);
+            drawPile.addAll(discardPileAsList);
+
+            discardPile.add(topCard);
+        }
+        return drawPile.pop();
     }
 }
