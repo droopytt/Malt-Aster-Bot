@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 /**
  * Decide the main logic of the game
@@ -217,11 +218,28 @@ public class UnoMainGame extends UnoPhase {
             if(desiredSuit == UnoSuit.WILD)
                 handleErroneousOption(channel, "Please enter a valid suit to set the wildcard to");
             else {
-                ((ActionUnoCard)discardPile.peek()).setSuit(desiredSuit);
-                UnoSuit finalDesiredSuit = desiredSuit;
+                ActionUnoCard actionUnoCard = (ActionUnoCard) discardPile.peek();
+                boolean drawFour = actionUnoCard.getAction() == CardAction.WILD_DRAW_FOUR;
+
+                actionUnoCard.setSuit(desiredSuit);
+
+                StringBuilder stringBuilder = new StringBuilder();
+
+                assert desiredSuit != null;
+                stringBuilder.append(Utils.getEffectiveName(sender, uno.getGuild()))
+                        .append(" has chosen the wild card colour to be ")
+                        .append(desiredSuit.toString().toLowerCase());
+
+                if(drawFour) {
+                    stringBuilder.append("\n").append("**").append(Utils.getEffectiveName(sender, uno.getGuild())).append("**")
+                            .append(" has also forced ").append("**").append(Utils.getEffectiveName(getNextPlayer(), uno.getGuild())).append("**")
+                            .append(" to draw four cards.");
+                    draw(getNextPlayer(), 4);
+
+                }
+
                 participants.forEach(user -> user.openPrivateChannel()
-                        .queue(privateChannel -> privateChannel.sendMessage(Utils.getEffectiveName(sender, uno.getGuild()) +
-                                " has chosen the wild card colour to be " + finalDesiredSuit.toString().toLowerCase()).queue()));
+                        .queue(privateChannel -> privateChannel.sendMessage(stringBuilder.toString()).queue()));
                 waitingOnWildChoice = false;
                 nextTurn();
             }
@@ -587,7 +605,7 @@ public class UnoMainGame extends UnoPhase {
             List<UnoCard> discardPileAsList = new ArrayList<>(discardPile);
             Utils.shuffleCollection(discardPileAsList);
             drawPile.addAll(discardPileAsList);
-
+            
             discardPile.add(topCard);
         }
         return drawPile.pop();
