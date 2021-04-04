@@ -7,12 +7,8 @@ public class ValuedUnoCard extends UnoCard {
 
     private final int value;
 
-    private final UnoSuit suit;
-
-
     public ValuedUnoCard(int value, UnoSuit suit) {
-        super();
-        this.suit = suit;
+        super(suit);
         this.value = value;
     }
 
@@ -20,8 +16,9 @@ public class ValuedUnoCard extends UnoCard {
         return value;
     }
 
-    public UnoSuit getSuit() {
-        return suit;
+    @Override
+    public int getScoreValue() {
+        return value;
     }
 
     @Override

@@ -4,13 +4,26 @@ public class ActionUnoCard extends UnoCard {
 
     private final CardAction action;
 
-    public ActionUnoCard(CardAction action) {
-        super();
+    public ActionUnoCard(CardAction action, UnoSuit suit) {
+        super(suit);
         this.action = action;
     }
 
     public CardAction getAction() {
         return action;
+    }
+
+    public boolean isWild() {
+        return suit == UnoSuit.WILD;
+    }
+
+    public void setSuit(UnoSuit suit) {
+        this.suit = suit;
+    }
+
+    @Override
+    public int getScoreValue() {
+        return action.getScoreValue();
     }
 
     @Override
@@ -21,6 +34,9 @@ public class ActionUnoCard extends UnoCard {
 
         for (String token : tokens)
             stringBuilder.append(token.charAt(0)).append(token.substring(1).toLowerCase()).append(" ");
+
+        if(!this.isWild())
+            stringBuilder.append("(").append(suit.toString().charAt(0)).append(suit.toString().substring(1).toLowerCase()).append(")");
 
         return stringBuilder.toString().trim();
     }

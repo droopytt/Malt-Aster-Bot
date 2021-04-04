@@ -32,8 +32,8 @@ public class UnoStartPhase extends UnoPhase {
         //using reactions
 
         unoMessage = uno.getOriginalEvent().getChannel().sendMessage("UNO started! React to this message"
-                + " with a CHECK to join, the game will begin when " +
-                uno.getCommander().getAsMention() + " reacts with an 'X'").complete();
+                + " with a :white_check_mark: to join, the game will begin when " +
+                uno.getCommander().getAsMention() + " reacts with an :negative_squared_cross_mark:").complete();
 
         unoMessage.addReaction(Constants.CHECK_EMOTE).queue();
         unoMessage.addReaction(Constants.CROSS_EMOTE).queue();
@@ -52,9 +52,7 @@ public class UnoStartPhase extends UnoPhase {
             // Need stream supplier to reuse stream since streams are closed after you run a terminal operation like count below.
             Supplier<Stream<User>> userStreamSupplier = () -> unoMessage.retrieveReactionUsers(CHECK_EMOTE).stream().filter(user -> !user.isBot());
 
-            Stream<User> userStream = userStreamSupplier.get();
-
-            if(userStream.count() >= MINIMUM_UNO_PLAYERS) {
+            if(userStreamSupplier.get().count() >= MINIMUM_UNO_PLAYERS) {
                 userStreamSupplier.get()
                         .filter(user -> !user.equals(commander))
                         .forEach(participants::add);
