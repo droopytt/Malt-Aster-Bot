@@ -14,8 +14,10 @@ public class LatencyCommand extends Command {
 
     @Override
     public void execute(GuildMessageReceivedEvent event, List<String> params) {
-        event.getChannel().sendMessage("The current latency between me and the discord servers is " +
-                Bot.getInstance().getBotUser().getGatewayPing()).queue();
+        event.getChannel()
+                .sendMessage("The current latency between me and the discord servers is "
+                        + Bot.getInstance().getBotUser().getGatewayPing())
+                .queue();
     }
 
     @Override

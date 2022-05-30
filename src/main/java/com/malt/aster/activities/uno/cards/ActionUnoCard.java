@@ -33,10 +33,17 @@ public class ActionUnoCard extends UnoCard {
         StringBuilder stringBuilder = new StringBuilder();
 
         for (String token : tokens)
-            stringBuilder.append(token.charAt(0)).append(token.substring(1).toLowerCase()).append(" ");
+            stringBuilder
+                    .append(token.charAt(0))
+                    .append(token.substring(1).toLowerCase())
+                    .append(" ");
 
-        if(!this.isWild())
-            stringBuilder.append("(").append(suit.toString().charAt(0)).append(suit.toString().substring(1).toLowerCase()).append(")");
+        if (!this.isWild())
+            stringBuilder
+                    .append("(")
+                    .append(suit.toString().charAt(0))
+                    .append(suit.toString().substring(1).toLowerCase())
+                    .append(")");
 
         return stringBuilder.toString().trim();
     }

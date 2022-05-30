@@ -14,5 +14,4 @@ public enum UnoSuit {
     UnoSuit(Color color) {
         this.color = color;
     }
-
 }

@@ -5,9 +5,9 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.util.*;
 
-public class CommandManager {
+public final class CommandManager {
 
-    private Map<String, Command> commands;
+    private final Map<String, Command> commands;
 
     public CommandManager() {
         commands = new HashMap<>();
@@ -17,21 +17,20 @@ public class CommandManager {
     Deals with a command, given a command name and the context (the event)
      */
     public void handleCommand(String commandName, GuildMessageReceivedEvent event) {
-        Optional<Command> commandOptional = commandFromName(commandName);
 
         // Adds any space separated strings to the parameter list
-        commandOptional.ifPresent(command -> {
+        commandFromName(commandName).ifPresent(command -> {
             // Check if the command is an administrator command
-            if(command instanceof AdminCommand && !event.getMember().hasPermission(Permission.ADMINISTRATOR))
-                return;
-
-            String[] tokens = event.getMessage().getContentRaw().substring(1).split(" ", 2);
-            List<String> paramList = new ArrayList<>();
-            if (hasParams(tokens)) {
-                final String params = tokens[1].trim();
-                paramList = new ArrayList<>(Arrays.asList(params.split(" ")));
+            if (!(command instanceof AdminCommand) || event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
+                String[] tokens = event.getMessage().getContentRaw().substring(1).split(" ", 2);
+                List<String> paramList = new ArrayList<>();
+                if (hasParams(tokens)) {
+                    final String params = tokens[1].trim();
+                    paramList = new ArrayList<>(Arrays.asList(params.split(" ")));
+                }
+                command.execute(event, paramList);
             }
-            command.execute(event, paramList);
+
         });
     }
 
@@ -42,8 +41,9 @@ public class CommandManager {
     public CommandManager register(Command command) {
         commands.put(command.getName().toLowerCase(), command);
 
-        for (String alias : command.getAliases())
+        for (String alias : command.getAliases()) {
             commands.put(alias.toLowerCase(), command);
+        }
 
         return this;
     }

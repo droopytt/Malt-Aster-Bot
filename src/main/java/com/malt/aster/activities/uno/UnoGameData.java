@@ -3,7 +3,6 @@ package com.malt.aster.activities.uno;
 import com.malt.aster.activities.uno.cards.UnoCard;
 import net.dv8tion.jda.api.entities.User;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 

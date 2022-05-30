@@ -6,13 +6,14 @@ import com.malt.aster.activities.uno.cards.actions.UnoActionable;
 import net.dv8tion.jda.api.entities.User;
 
 public enum CardAction implements UnoActionable {
-    DRAW_TWO (20),
-    SKIP (20),
-    REVERSE (20),
-    WILD (50),
+    DRAW_TWO(20),
+    SKIP(20),
+    REVERSE(20),
+    WILD(50),
     WILD_DRAW_FOUR(50);
 
     int scoreValue;
+
     CardAction(int scoreValue) {
         this.scoreValue = scoreValue;
     }

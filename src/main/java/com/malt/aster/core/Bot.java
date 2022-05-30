@@ -22,18 +22,17 @@ public class Bot {
     private JDA botUser;
     private CommandManager commandManager;
     private GlobalActivityManager activityManager;
-        
+
     private static String prefix;
 
     private Bot(String token) throws LoginException {
-    	botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
+        botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
 
         commandManager = new CommandManager();
         activityManager = new GlobalActivityManager();
 
         prefix = "!";
         installCommands();
-        
     }
 
     /**
@@ -53,14 +52,14 @@ public class Bot {
     }
 
     public static void init(String token) throws LoginException {
-        if (instance != null)
-            throw new IllegalStateException("Bot has already been initialised.");
+        if (instance != null) throw new IllegalStateException("Bot has already been initialised.");
         instance = new Bot(token);
     }
 
     public void handleCommandEvent(GuildMessageReceivedEvent event) {
         // If the event message is, e.g. !cmd testing testing, commandName is set to "cmd"
-        String commandName = event.getMessage().getContentRaw().substring(1).split(" ")[0].toLowerCase();
+        String commandName =
+                event.getMessage().getContentRaw().substring(1).split(" ")[0].toLowerCase();
         commandManager.handleCommand(commandName, event);
     }
 

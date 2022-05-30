@@ -35,5 +35,4 @@ public interface ActivityPhase {
      * @param evt The relevant {@link PrivateMessageReceivedEvent}
      */
     void handlePrivateMessage(PrivateMessageReceivedEvent evt);
-
 }

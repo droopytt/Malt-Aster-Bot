@@ -1,7 +1,6 @@
 package com.malt.aster.activities.uno.cards;
 
 import com.malt.aster.activities.cards.Card;
-import com.malt.aster.activities.cards.ValuedCard;
 
 public abstract class UnoCard implements Card {
 
@@ -18,7 +17,9 @@ public abstract class UnoCard implements Card {
         return this instanceof ValuedUnoCard;
     }
 
-    public boolean isAction() { return this instanceof ActionUnoCard; }
+    public boolean isAction() {
+        return this instanceof ActionUnoCard;
+    }
 
     public UnoSuit getSuit() {
         return suit;
@@ -34,8 +35,6 @@ public abstract class UnoCard implements Card {
 
     @Override
     public String toString() {
-        return "UnoCard{" +
-                "suit=" + suit +
-                '}';
+        return "UnoCard{" + "suit=" + suit + '}';
     }
 }

@@ -15,14 +15,11 @@ import java.util.Map;
  */
 public class GuildActivityManager {
 
-    // The guild this activity manager belongs to
-    private Guild guild;
+    // Mappings from the user who created the activity (in this context, the "commander") and the activity they
+    // initiated
+    private final Map<User, Activity> activities;
 
-    // Mappings from the user who created the activity (in this context, the "commander") and the activity they initiated
-    private Map<User, Activity> activities;
-
-    public GuildActivityManager(Guild guild) {
-        this.guild = guild;
+    public GuildActivityManager() {
         activities = new HashMap<>();
     }
 
@@ -36,7 +33,7 @@ public class GuildActivityManager {
      * @return true if the activity was added successfully, false otherwise
      */
     public boolean addActivity(Activity activity) {
-        if(activities.containsKey(activity.getCommander())) {
+        if (activities.containsKey(activity.getCommander())) {
             notifyActivityStartupFailed(activity);
             return false;
         } else {
@@ -46,22 +43,25 @@ public class GuildActivityManager {
     }
 
     public void removeActivity(Activity activity) {
-        if(activities.containsKey(activity.getCommander()))
+        if (activities.containsKey(activity.getCommander())) {
             activities.remove(activity.getCommander());
-        else
+        } else {
             throw new IllegalStateException("The commander currently does not have an activity to remove.");
+        }
     }
 
     public void handleReaction(GuildMessageReactionAddEvent event) {
         Activity activity = activities.get(event.getUser());
-        if (activity != null)
+        if (activity != null) {
             activity.handleReaction(event);
+        }
     }
 
     public void handleMessage(GuildMessageReceivedEvent event) {
         Activity activity = activities.get(event.getAuthor());
-        if (activity != null)
+        if (activity != null) {
             activity.handleMessage(event);
+        }
     }
 
     /**
@@ -81,11 +81,13 @@ public class GuildActivityManager {
      * @param activity The activity that failed to start
      */
     private void notifyActivityStartupFailed(Activity activity) {
-        PrivateChannel directMessageChannel = activity.getCommander().openPrivateChannel().complete();
+        PrivateChannel directMessageChannel =
+                activity.getCommander().openPrivateChannel().complete();
         String activityName = activity.getType().toString().toLowerCase();
 
-        directMessageChannel.sendMessage("Your activity " + activityName +
-                        " could not be started because you already have one in progress.").queue();
+        directMessageChannel
+                .sendMessage("Your activity " + activityName
+                        + " could not be started because you already have one in progress.")
+                .queue();
     }
-
 }

@@ -27,8 +27,7 @@ public class UnoActionHandler {
     }
 
     public static UnoActionHandler getInstance() {
-        if(instance == null)
-            instance = new UnoActionHandler();
+        if (instance == null) instance = new UnoActionHandler();
         return instance;
     }
 

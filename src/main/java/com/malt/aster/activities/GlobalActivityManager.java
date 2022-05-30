@@ -1,6 +1,5 @@
 package com.malt.aster.activities;
 
-import com.malt.aster.core.Bot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
@@ -39,7 +38,7 @@ public class GlobalActivityManager {
         GuildActivityManager manager = managersForGuilds.get(guildId);
 
         if (manager == null) {
-            manager = new GuildActivityManager(Bot.getInstance().getBotUser().getGuildById(guildId));
+            manager = new GuildActivityManager();
             managersForGuilds.put(guildId, manager);
         }
 

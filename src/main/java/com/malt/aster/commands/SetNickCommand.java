@@ -18,8 +18,10 @@ public class SetNickCommand extends SingleParamCommand implements AdminCommand {
 
     @Override
     public void execute(GuildMessageReceivedEvent evt, @Nullable String params) {
-        if(params == null)
-            evt.getChannel().sendMessage("You need to provide a name to change to").queue();
+        if (params == null)
+            evt.getChannel()
+                    .sendMessage("You need to provide a name to change to")
+                    .queue();
         else {
             String botId = Bot.getInstance().getBotUser().getSelfUser().getId();
             evt.getGuild().getMemberById(botId).modifyNickname(params).queue();

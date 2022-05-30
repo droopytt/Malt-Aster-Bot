@@ -3,10 +3,8 @@ package com.maltaster.activities;
 import com.malt.aster.activities.uno.UnoMainGame;
 import com.malt.aster.activities.uno.cards.UnoSuit;
 import com.malt.aster.activities.uno.cards.ValuedUnoCard;
-import com.sun.corba.se.impl.io.ValueUtility;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class CompatibilityTest {
 

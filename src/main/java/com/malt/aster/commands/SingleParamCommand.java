@@ -55,13 +55,11 @@ public abstract class SingleParamCommand extends Command {
      */
     @Override
     public final void execute(GuildMessageReceivedEvent evt, List<String> params) {
-        if (params.isEmpty())
-            execute(evt, (String) null);
+        if (params.isEmpty()) execute(evt, (String) null);
         else {
             StringBuilder stringBuilder = new StringBuilder();
             params.forEach(str -> stringBuilder.append(str).append(" "));
             execute(evt, stringBuilder.toString().trim());
         }
-
     }
 }

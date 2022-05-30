@@ -45,7 +45,7 @@ public class Uno implements Activity {
 
     @Override
     public void onStart() {
-        if(!started) {
+        if (!started) {
             // Add all the phases for this activity
             addPhase(new UnoStartPhase(this));
             addPhase(new UnoMainGame(this));
@@ -86,8 +86,7 @@ public class Uno implements Activity {
     }
 
     public void update() {
-        if(phases.isEmpty())
-            cleanUp();
+        if (phases.isEmpty()) cleanUp();
         else {
             currentActivityPhase = phases.poll();
             currentActivityPhase.onStart();
@@ -117,7 +116,7 @@ public class Uno implements Activity {
 
         for (int i = 0; i < 4; i++) {
             cards.add(new ActionUnoCard(CardAction.WILD, UnoSuit.WILD));
-             cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR, UnoSuit.WILD));
+            cards.add(new ActionUnoCard(CardAction.WILD_DRAW_FOUR, UnoSuit.WILD));
         }
     }
 
@@ -133,7 +132,10 @@ public class Uno implements Activity {
     @Override
     public void cleanUp() {
         System.out.println("Uno@cleanUp: Cleaning up...");
-        Bot.getInstance().getActivityManager().getActivityManagerForGuild(originalEvent.getGuild()).removeActivity(this);
+        Bot.getInstance()
+                .getActivityManager()
+                .getActivityManagerForGuild(originalEvent.getGuild())
+                .removeActivity(this);
     }
 
     /**

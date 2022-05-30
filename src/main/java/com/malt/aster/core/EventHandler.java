@@ -16,11 +16,9 @@ public class EventHandler extends ListenerAdapter {
 
     @Override
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event) {
-        if(event.getAuthor().isBot())
-            return;
+        if (event.getAuthor().isBot()) return;
 
-        if(containsCommand(event))
-            Bot.getInstance().handleCommandEvent(event);
+        if (containsCommand(event)) Bot.getInstance().handleCommandEvent(event);
 
         Bot.getInstance().getActivityManager().handleMessage(event);
     }

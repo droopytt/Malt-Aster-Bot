@@ -28,12 +28,16 @@ public class UnoStartPhase extends UnoPhase {
 
     @Override
     public void onStart() {
-        //Send the initial message allowing users to join and the commander to start the game
-        //using reactions
+        // Send the initial message allowing users to join and the commander to start the game
+        // using reactions
 
-        unoMessage = uno.getOriginalEvent().getChannel().sendMessage("UNO started! React to this message"
-                + " with a :white_check_mark: to join, the game will begin when " +
-                uno.getCommander().getAsMention() + " reacts with an :negative_squared_cross_mark:").complete();
+        unoMessage = uno.getOriginalEvent()
+                .getChannel()
+                .sendMessage("UNO started! React to this message"
+                        + " with a :white_check_mark: to join, the game will begin when "
+                        + uno.getCommander().getAsMention()
+                        + " reacts with an :negative_squared_cross_mark:")
+                .complete();
 
         unoMessage.addReaction(Constants.CHECK_EMOTE).queue();
         unoMessage.addReaction(Constants.CROSS_EMOTE).queue();
@@ -44,25 +48,27 @@ public class UnoStartPhase extends UnoPhase {
         String emote = evt.getReaction().getReactionEmote().getName();
         User commander = uno.getCommander();
 
-        if(evt.getUser().equals(commander) && emote.equalsIgnoreCase(CROSS_EMOTE)) {
+        if (evt.getUser().equals(commander) && emote.equalsIgnoreCase(CROSS_EMOTE)) {
 
             // Add commander and anyone who reacted with the checkmark to the list of participants
             participants.add(commander);
 
-            // Need stream supplier to reuse stream since streams are closed after you run a terminal operation like count below.
-            Supplier<Stream<User>> userStreamSupplier = () -> unoMessage.retrieveReactionUsers(CHECK_EMOTE).stream().filter(user -> !user.isBot());
+            // Need stream supplier to reuse stream since streams are closed after you run a terminal operation like
+            // count below.
+            Supplier<Stream<User>> userStreamSupplier =
+                    () -> unoMessage.retrieveReactionUsers(CHECK_EMOTE).stream().filter(user -> !user.isBot());
 
-            if(userStreamSupplier.get().count() >= MINIMUM_UNO_PLAYERS) {
-                userStreamSupplier.get()
-                        .filter(user -> !user.equals(commander))
-                        .forEach(participants::add);
+            if (userStreamSupplier.get().count() >= MINIMUM_UNO_PLAYERS) {
+                userStreamSupplier.get().filter(user -> !user.equals(commander)).forEach(participants::add);
 
                 // Display the users who are to participate
                 StringBuilder stringBuilder = new StringBuilder();
 
                 stringBuilder.append("The current participants are: \n");
-                participants.forEach(user -> stringBuilder.append(user.getAsMention()).append("\n"));
-                stringBuilder.append("You have been messaged your cards, and the game will now proceed in private messages.");
+                participants.forEach(
+                        user -> stringBuilder.append(user.getAsMention()).append("\n"));
+                stringBuilder.append(
+                        "You have been messaged your cards, and the game will now proceed in private messages.");
 
                 // Update the messages: Delete the original message, and now update uno.
                 evt.getChannel().sendMessage(stringBuilder.toString().trim()).queue(callback -> {
@@ -71,8 +77,10 @@ public class UnoStartPhase extends UnoPhase {
                 });
             } else {
                 // Disband the session if the session does not have enough players
-                unoMessage.editMessage(unoMessage.getContentRaw()
-                        + "\nYou must have at least " + MINIMUM_UNO_PLAYERS + " players to start - Your session has been disbanded").queue();
+                unoMessage
+                        .editMessage(unoMessage.getContentRaw() + "\nYou must have at least " + MINIMUM_UNO_PLAYERS
+                                + " players to start - Your session has been disbanded")
+                        .queue();
 
                 uno.cleanUp();
             }
@@ -80,7 +88,5 @@ public class UnoStartPhase extends UnoPhase {
     }
 
     @Override
-    public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {
-
-    }
+    public void handlePrivateMessage(PrivateMessageReceivedEvent evt) {}
 }

@@ -23,28 +23,33 @@ public class CheckRolesCommand extends SingleParamCommand implements AdminComman
 
     @Override
     public void execute(GuildMessageReceivedEvent evt, @Nullable String params) {
-        if(params == null)
-            evt.getChannel().sendMessage("You must provide the name of the role to this command").queue();
+        if (params == null)
+            evt.getChannel()
+                    .sendMessage("You must provide the name of the role to this command")
+                    .queue();
         else {
             EmbedBuilder embedBuilder = new EmbedBuilder();
 
             embedBuilder.setTitle("Members with role " + params);
             List<Role> rolesWithName = evt.getGuild().getRolesByName(params, true);
 
-            if(rolesWithName.isEmpty())
-                evt.getChannel().sendMessage("There is no role with the name " + params).queue();
-            else {
+            if (rolesWithName.isEmpty()) {
+                evt.getChannel()
+                        .sendMessage("There is no role with the name " + params)
+                        .queue();
+            } else {
                 Role roleToSearch = evt.getGuild().getRolesByName(params, true).get(0);
 
                 List<Member> membersWithRole = evt.getGuild().getMembersWithRoles(roleToSearch);
 
                 membersWithRole.stream()
                         .sorted(Comparator.comparing(Member::getEffectiveName))
-                        .forEach(member -> embedBuilder.appendDescription(member.getEffectiveName()).appendDescription("\n"));
+                        .forEach(member -> embedBuilder
+                                .appendDescription(member.getEffectiveName())
+                                .appendDescription("\n"));
 
                 evt.getChannel().sendMessage(embedBuilder.build()).queue();
             }
-
         }
     }
 
