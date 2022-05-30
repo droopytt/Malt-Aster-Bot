@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.entities.User;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.unmodifiableList;
+
 /**
  * A helper class to map each {@link User} in a {@link Uno} game to their corresponding {@link UnoCard} list and their score for the game so far
  */
@@ -34,7 +36,7 @@ class UnoGameData {
      * @return A view of the cards of this user
      */
     public List<UnoCard> getCards() {
-        return Collections.unmodifiableList(cards);
+        return unmodifiableList(cards);
     }
 
     public void addCard(UnoCard card) {

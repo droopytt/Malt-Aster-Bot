@@ -144,7 +144,7 @@ public class Uno implements Activity {
      * @return A list of {@link User}s that are participating in the game
      */
     public Set<User> getParticipants() {
-        return Collections.unmodifiableSet(new HashSet<>(participants));
+        return Set.copyOf(participants);
     }
 
     public GuildMessageReceivedEvent getOriginalEvent() {

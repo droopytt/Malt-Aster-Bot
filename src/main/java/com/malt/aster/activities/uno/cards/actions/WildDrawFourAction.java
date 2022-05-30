@@ -28,7 +28,7 @@ public class WildDrawFourAction implements UnoActionable {
                         stringBuilder.append(suit.toString().toLowerCase()).append("\n"));
         sender.openPrivateChannel()
                 .queue(privateChannel ->
-                        privateChannel.sendMessage(stringBuilder.toString()).queue());
+                        privateChannel.sendMessage(stringBuilder).queue());
         unoMainGame.setWaitingOnWild();
     }
 }

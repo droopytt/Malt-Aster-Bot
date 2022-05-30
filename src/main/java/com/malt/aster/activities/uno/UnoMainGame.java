@@ -1,7 +1,6 @@
 package com.malt.aster.activities.uno;
 
 import com.malt.aster.activities.uno.cards.*;
-import com.malt.aster.utils.Constants;
 import com.malt.aster.utils.Utils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.PrivateChannel;
@@ -16,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.malt.aster.activities.uno.Uno.obtainCards;
 import static com.malt.aster.utils.Utils.shuffleCollection;
 import static java.util.Collections.shuffle;
+import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -49,7 +49,7 @@ public class UnoMainGame extends UnoPhase {
         participantData = new HashMap<>();
         discardPile = new Stack<>();
         drawPile = new Stack<>();
-        erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
+        erroneousMessagesRemaining = 3;
 
         recentlyPenalised = new HashMap<>();
 
@@ -68,18 +68,20 @@ public class UnoMainGame extends UnoPhase {
         // Can't compare their values if either one of them are not valued uno cards
         if (!first.isValued() || !second.isValued()) return false;
 
-        ValuedUnoCard firstValuedCard = (ValuedUnoCard) first;
-        ValuedUnoCard otherValuedCard = (ValuedUnoCard) second;
+        var firstValuedCard = (ValuedUnoCard) first;
+        var otherValuedCard = (ValuedUnoCard) second;
 
         return firstValuedCard.getValue() == otherValuedCard.getValue();
     }
 
     private static boolean checkIfWild(UnoCard card) {
-        if (!card.isAction()) return false;
+        if (card.isAction()) {
+            var actionUnoCard = (ActionUnoCard) card;
+            return actionUnoCard.isWild();
+        } else {
+            return false;
+        }
 
-        ActionUnoCard actionUnoCard = (ActionUnoCard) card;
-
-        return actionUnoCard.isWild();
     }
 
     public static boolean canMatch(UnoCard currentCard, UnoCard discardCard) {
@@ -211,7 +213,7 @@ public class UnoMainGame extends UnoPhase {
         PrivateChannel channel = evt.getChannel();
         String messageContent = evt.getMessage().getContentRaw().toLowerCase();
 
-        if (messageContent.startsWith(Constants.ACTIVITY_MESSAGE_PREFIX)) {
+        if (messageContent.startsWith("!")) {
             handleCommunicationMessage(evt);
         } else if (waitingOnWildChoice) {
             UnoSuit desiredSuit = null;
@@ -387,7 +389,7 @@ public class UnoMainGame extends UnoPhase {
             channel.sendMessage(stringBuilder.toString()).queue();
             nextTurn();
         } else {
-            channel.sendMessage(message + " (" + erroneousMessagesRemaining + "/" + Constants.UNO_MAX_ERRONEOUS_MESSAGES
+            channel.sendMessage(message + " (" + erroneousMessagesRemaining + "/" + 3
                             + " chances remaining)")
                     .queue();
             erroneousMessagesRemaining--;
@@ -421,7 +423,7 @@ public class UnoMainGame extends UnoPhase {
     public void nextTurn() {
         updatePlayerIndex();
         turnNumber++;
-        erroneousMessagesRemaining = Constants.UNO_MAX_ERRONEOUS_MESSAGES;
+        erroneousMessagesRemaining = 3;
         notifyAllUserCards();
 
         User currentPlayer = getCurrentPlayer();
@@ -448,11 +450,11 @@ public class UnoMainGame extends UnoPhase {
     }
 
     private int getNextPlayerIndex() {
-        int idx = reversed
+        int index = reversed
                 ? (currentPlayerIndex - 1) % participants.size()
                 : (currentPlayerIndex + 1) % participants.size();
-        if (idx < 0) idx = participants.size() - 1;
-        return idx;
+        if (index < 0) index = participants.size() - 1;
+        return index;
     }
 
     /**
@@ -476,8 +478,8 @@ public class UnoMainGame extends UnoPhase {
         if (evt.getMessage().getContentRaw().split(" ").length <= 1) return;
 
         // Refer to them by the name in the server the activity was started in
-        String userName = requireNonNull(uno.getGuild().getMember(evt.getAuthor()))
-                .getEffectiveName();
+        String userName =
+                requireNonNull(uno.getGuild().getMember(evt.getAuthor())).getEffectiveName();
 
         // Takes remainder of message, for example, if message is sent through !say hi,
         // actualMessage now refers to "hi"
@@ -613,7 +615,9 @@ public class UnoMainGame extends UnoPhase {
      * @param amount      The amount of cards to draw
      */
     public void draw(User participant, int amount) {
-        for (int i = 0; i < amount; i++) participantData.get(participant).addCard(drawCard());
+        for (int i = 0; i < amount; i++) {
+            participantData.get(participant).addCard(drawCard());
+        }
     }
 
     /**
@@ -629,7 +633,7 @@ public class UnoMainGame extends UnoPhase {
      * @return A view of the participants of this uno game
      */
     public List<User> getParticipants() {
-        return Collections.unmodifiableList(participants);
+        return unmodifiableList(participants);
     }
 
     /**

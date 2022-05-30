@@ -12,11 +12,12 @@ sourceCompatibility = 17
 
 repositories {
   jcenter()
+  mavenCentral()
 }
 
 dependencies {
-  implementation 'junit:junit:4.12'
-  implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+  implementation 'junit:junit:4.13.2'
+  implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
   compile 'com.jagrosh:jda-utilities:3.0.3'
   compile 'net.dv8tion:JDA:4.1.1_101'
   testCompile group: 'org.mockito', name: 'mockito-core', version: '2.1.0'

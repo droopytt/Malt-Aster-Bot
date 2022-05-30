@@ -1,6 +1,5 @@
 package com.malt.aster.activities.uno;
 
-import com.malt.aster.utils.Constants;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -10,13 +9,14 @@ import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.malt.aster.utils.Constants.*;
-
 /**
  * Deals with the part of uno that handles the recruitment process at the start of the game
  */
 public class UnoStartPhase extends UnoPhase {
 
+    public static final String CHECK_EMOTE = "\u2705";
+    public static final String CROSS_EMOTE = "\u274E";
+    public static final int MINIMUM_PLAYERS = 2;
     Message unoMessage;
 
     public UnoStartPhase(Uno uno) {
@@ -39,8 +39,8 @@ public class UnoStartPhase extends UnoPhase {
                         + " reacts with an :negative_squared_cross_mark:")
                 .complete();
 
-        unoMessage.addReaction(Constants.CHECK_EMOTE).queue();
-        unoMessage.addReaction(Constants.CROSS_EMOTE).queue();
+        unoMessage.addReaction(CHECK_EMOTE).queue();
+        unoMessage.addReaction(CROSS_EMOTE).queue();
     }
 
     @Override
@@ -53,12 +53,10 @@ public class UnoStartPhase extends UnoPhase {
             // Add commander and anyone who reacted with the checkmark to the list of participants
             participants.add(commander);
 
-            // Need stream supplier to reuse stream since streams are closed after you run a terminal operation like
-            // count below.
             Supplier<Stream<User>> userStreamSupplier =
                     () -> unoMessage.retrieveReactionUsers(CHECK_EMOTE).stream().filter(user -> !user.isBot());
 
-            if (userStreamSupplier.get().count() >= MINIMUM_UNO_PLAYERS) {
+            if (userStreamSupplier.get().count() >= MINIMUM_PLAYERS) {
                 userStreamSupplier.get().filter(user -> !user.equals(commander)).forEach(participants::add);
 
                 // Display the users who are to participate
@@ -78,7 +76,7 @@ public class UnoStartPhase extends UnoPhase {
             } else {
                 // Disband the session if the session does not have enough players
                 unoMessage
-                        .editMessage(unoMessage.getContentRaw() + "\nYou must have at least " + MINIMUM_UNO_PLAYERS
+                        .editMessage(unoMessage.getContentRaw() + "\nYou must have at least " + MINIMUM_PLAYERS
                                 + " players to start - Your session has been disbanded")
                         .queue();
 

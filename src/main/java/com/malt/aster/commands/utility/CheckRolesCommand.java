@@ -28,10 +28,10 @@ public class CheckRolesCommand extends SingleParamCommand implements AdminComman
                     .sendMessage("You must provide the name of the role to this command")
                     .queue();
         else {
-            EmbedBuilder embedBuilder = new EmbedBuilder();
+            var embedBuilder = new EmbedBuilder();
 
             embedBuilder.setTitle("Members with role " + params);
-            List<Role> rolesWithName = evt.getGuild().getRolesByName(params, true);
+            var rolesWithName = evt.getGuild().getRolesByName(params, true);
 
             if (rolesWithName.isEmpty()) {
                 evt.getChannel()

@@ -72,7 +72,8 @@ public class GlobalActivityManager {
      * @param event The private message event
      */
     public void handlePrivateMessage(PrivateMessageReceivedEvent event) {
-        for (Guild guild : event.getJDA().getGuilds())
+        for (Guild guild : event.getJDA().getGuilds()) {
             getActivityManagerForGuild(guild).handlePrivateMessage(event);
+        }
     }
 }

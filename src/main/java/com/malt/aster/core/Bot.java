@@ -17,13 +17,12 @@ import javax.security.auth.login.LoginException;
  */
 public class Bot {
 
+    public static final String PREFIX = "!";
     private static Bot instance;
 
     private JDA botUser;
     private CommandManager commandManager;
     private GlobalActivityManager activityManager;
-
-    private static String prefix;
 
     private Bot(String token) throws LoginException {
         botUser = new JDABuilder(token).addEventListeners(new EventHandler()).build();
@@ -31,7 +30,6 @@ public class Bot {
         commandManager = new CommandManager();
         activityManager = new GlobalActivityManager();
 
-        prefix = "!";
         installCommands();
     }
 
@@ -52,7 +50,9 @@ public class Bot {
     }
 
     public static void init(String token) throws LoginException {
-        if (instance != null) throw new IllegalStateException("Bot has already been initialised.");
+        if (instance != null) {
+            throw new IllegalStateException("Bot has already been initialised.");
+        }
         instance = new Bot(token);
     }
 
@@ -70,7 +70,7 @@ public class Bot {
     }
 
     public String getPrefix() {
-        return prefix;
+        return PREFIX;
     }
 
     public JDA getBotUser() {

@@ -5,6 +5,9 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.util.*;
 
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
+
 /**
  * To make a new command there are a few things to do:
  * <p><p>
@@ -53,13 +56,13 @@ public abstract class Command {
     public abstract String getDescription();
 
     public List<String> getParameters() {
-        return Collections.unmodifiableList(parameters);
+        return unmodifiableList(parameters);
     }
 
     /**
      * @return A set of aliases of this command
      */
     public Set<String> getAliases() {
-        return Collections.unmodifiableSet(aliases);
+        return unmodifiableSet(aliases);
     }
 }
